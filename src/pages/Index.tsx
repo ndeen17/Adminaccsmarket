@@ -32,7 +32,7 @@ const Index = () => {
               Admin Dashboard
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10 animate-fade-in">
-              Manage your platform with our intuitive and powerful admin dashboard. Complete control at your fingertips.
+              Accss platform with dashboard. Complete control at your fingertips.
             </p>
             <div className="space-x-4 animate-fade-in">
               <Link to="/admin/login">
