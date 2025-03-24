@@ -28,6 +28,23 @@ export const adminSignup = async (credentials: Credentials) => {
 
 export const adminLogin = async (credentials: Credentials) => {
   await delay(1000);
+  // Demo admin credentials check
+  if (
+    credentials.email === "admin@example.com" &&
+    credentials.password === "admin123"
+  ) 
+  {
+    const demoAdmin = {
+      id: "demo",
+      name: "Demo Admin",
+      email: "admin@example.com",
+      role: "admin",
+      createdAt: new Date().toISOString().split("T")[0],
+    };
+    localStorage.setItem("adminToken", "demo-admin-token");
+    localStorage.setItem("adminUser", JSON.stringify(demoAdmin));
+    return { admin: demoAdmin, token: "demo-admin-token" };
+  }
   const admin = mockAdmins.find(admin => admin.email === credentials.email);
   
   if (!admin) {
