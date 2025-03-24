@@ -106,7 +106,7 @@ const Index = () => {
                 <span className="text-xl font-bold">AccsMarket</span>
               </div>
               <p className="text-gray-500 mt-2">
-                Powerful admin tools for your business
+              AccsMarket admin tools
               </p>
             </div>
             
