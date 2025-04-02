@@ -90,10 +90,15 @@ export const forgotPassword = async (email: string) => {
 
 export const verifyPasswordResetToken = async (token: string) => {
   await delay(800);
-  // In a real implementation, this would verify the token
+  // In a real implementation, verify the token
   return { valid: true };
 };
 
+export const resetPassword = async (token: string, newPassword: string) => {
+  await delay(1000);
+  // In a real implementation, update the password in the database
+  return { success: true, message: "Password successfully reset" };
+};
 export const changePassword = async (token: string, newPassword: string) => {
   await delay(1000);
   // In a real implementation, this would update the password in the database
