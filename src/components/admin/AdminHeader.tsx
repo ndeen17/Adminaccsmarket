@@ -39,12 +39,13 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-gray-200 bg-white px-4 shadow-sm">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-gray-200 bg-white px-3 sm:px-4 shadow-sm">
       <Button
         variant="ghost"
         size="icon"
         onClick={toggleSidebar}
         aria-label="Toggle sidebar"
+        className="focus:outline-none focus:ring-1 focus:ring-primary"
       >
         {isMobile && isSidebarOpen ? (
           <X className="h-5 w-5" />
@@ -57,11 +58,11 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
           <h1 className="text-base font-semibold sm:text-lg md:text-xl truncate">
             {greeting}, {admin?.name || "Admin"}
           </h1>
-          <p className="text-xs text-muted-foreground sm:text-sm truncate">
+          <p className="text-xs text-muted-foreground sm:text-sm truncate hidden sm:block">
             Here's what's happening today
           </p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-1 sm:gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">

@@ -1,152 +1,104 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { 
-  LayoutDashboard, 
-  Users, 
-  ShoppingCart, 
-  LayoutGrid, 
-  BarChart3, 
+import {
+  Users,
+  ShoppingCart,
+  BarChart3,
+  Package,
+  MessageSquare,
+  Tag,
+  Home,
   Settings,
   LogOut,
-  XCircle
+  CreditCard,
+  Wallet,
+  FileText,
+  User,
+  LayoutDashboard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useEffect } from "react";
 
-interface SidebarItem {
-  title: string;
+interface SidebarLinkProps {
   href: string;
   icon: React.ElementType;
+  label: string;
 }
+
+const SidebarLink = ({ href, icon: Icon, label }: SidebarLinkProps) => {
+  const location = useLocation();
+  const isActive = location.pathname.startsWith(href);
+
+  return (
+    <Link
+      to={href}
+      className={cn(
+        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:text-primary",
+        isActive
+          ? "bg-primary/10 text-primary font-medium"
+          : "text-muted-foreground"
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+    </Link>
+  );
+};
 
 interface AdminSidebarProps {
   isOpen: boolean;
 }
 
-const sidebarItems: SidebarItem[] = [
-  {
-    title: "Dashboard",
-    href: "/admin/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Users",
-    href: "/admin/users",
-    icon: Users,
-  },
-  {
-    title: "Orders",
-    href: "/admin/orders",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Products",
-    href: "/admin/products",
-    icon: LayoutGrid,
-  },
-  {
-    title: "Analytics",
-    href: "/admin/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
-  },
-];
-
 const AdminSidebar = ({ isOpen }: AdminSidebarProps) => {
-  const location = useLocation();
   const { logout } = useAuth();
-  const isMobile = useIsMobile();
-
-  const handleLogout = () => {
-    logout();
+  
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
-    <>
-      {/* Overlay for mobile when sidebar is open */}
-      {isMobile && isOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40" aria-hidden="true" />
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-border transition-transform duration-300 ease-in-out transform lg:translate-x-0 lg:static lg:inset-auto",
+        isOpen ? "translate-x-0" : "-translate-x-full"
       )}
-      
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out",
-          {
-            "translate-x-0": isOpen,
-            "-translate-x-full": !isOpen,
-            "shadow-lg": isMobile && isOpen
-          }
-        )}
-      >
-        <div className="flex h-16 items-center justify-between border-b border-gray-200 px-4">
-          <div className="flex items-center">
-            <div className="flex items-center justify-center h-10 w-10 rounded-md bg-primary mr-2">
-              <span className="text-lg font-bold text-white">A</span>
-            </div>
-            <span className="text-xl font-bold">Admin</span>
-          </div>
-          {isMobile && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="md:hidden"
-              onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
-            >
-              <XCircle className="h-5 w-5" />
-            </Button>
-          )}
+    >
+      <div className="flex flex-col h-full">
+        <div className="border-b border-border p-4">
+          <Link to="/admin/dashboard" className="flex items-center gap-2 font-bold text-xl">
+            <LayoutDashboard className="h-5 w-5 text-primary" />
+            <span>Admin Portal</span>
+          </Link>
         </div>
-        <nav className="flex-1 overflow-y-auto p-2">
-          <ul className="space-y-1">
-            {sidebarItems.map((item) => (
-              <li key={item.href}>
-                <Link
-                  to={item.href}
-                  className={cn(
-                    "flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                    {
-                      "bg-gray-100": location.pathname === item.href,
-                      "hover:bg-gray-50": location.pathname !== item.href,
-                    }
-                  )}
-                >
-                  <item.icon
-                    className={cn("h-5 w-5", {
-                      "text-primary": location.pathname === item.href,
-                      "text-gray-500": location.pathname !== item.href,
-                    })}
-                  />
-                  <span
-                    className={cn("ml-3", {
-                      "text-primary": location.pathname === item.href,
-                    })}
-                  >
-                    {item.title}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <div className="p-2 border-t border-gray-200">
-          <Button 
-            variant="ghost"
+        
+        <div className="flex-1 overflow-auto py-2 px-4">
+          <nav className="flex flex-col gap-1">
+            <SidebarLink href="/admin/dashboard" icon={Home} label="Dashboard" />
+            <SidebarLink href="/admin/dashboard/users" icon={Users} label="Users Management" />
+            <SidebarLink href="/admin/dashboard/products" icon={Package} label="Products" />
+            <SidebarLink href="/admin/dashboard/digital-products" icon={FileText} label="Digital Products" />
+            <SidebarLink href="/admin/dashboard/homepage-management" icon={LayoutDashboard} label="Homepage" />
+            <SidebarLink href="/admin/dashboard/orders" icon={ShoppingCart} label="Orders" />
+            <SidebarLink href="/admin/dashboard/payments" icon={CreditCard} label="Payments" />
+            <SidebarLink href="/admin/dashboard/coupons" icon={Tag} label="Coupons" />
+            <SidebarLink href="/admin/dashboard/tickets" icon={MessageSquare} label="Support Tickets" />
+            <SidebarLink href="/admin/dashboard/wallet" icon={Wallet} label="Wallet Management" />
+            <SidebarLink href="/admin/dashboard/analytics" icon={BarChart3} label="Analytics" />
+            <SidebarLink href="/admin/dashboard/profile" icon={User} label="Profile" />
+          </nav>
+        </div>
+        
+        <div className="border-t border-border p-4">
+          <button
             onClick={handleLogout}
-            className="w-full flex items-center text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 px-3 py-2.5"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all hover:text-primary"
           >
-            <LogOut className="h-5 w-5" />
-            <span className="ml-3">Logout</span>
-          </Button>
+            <LogOut className="h-4 w-4" />
+            <span>Logout</span>
+          </button>
         </div>
-      </aside>
-    </>
+      </div>
+    </aside>
   );
 };
 
