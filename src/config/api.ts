@@ -33,6 +33,16 @@ export const TICKET_ENDPOINTS = {
   ASSIGN: `${API_BASE_URL}/assign-ticket`,
 };
 
+// Digital Products endpoints
+export const DIGITAL_PRODUCTS_ENDPOINTS = {
+  CREATE: `${API_BASE_URL}/create-digital-products`,
+  DOWNLOAD: `${API_BASE_URL}/download-digital-products`,
+  GET_ALL: `${API_BASE_URL}/digital-products`,
+  GET_BY_ID: (id: string) => `${API_BASE_URL}/digital-products/${id}`,
+  UPDATE: (id: string) => `${API_BASE_URL}/digital-products/${id}`,
+  DELETE: (id: string) => `${API_BASE_URL}/digital-products/${id}`,
+};
+
 // Message endpoints
 export const MESSAGE_ENDPOINTS = {
   SEND_USER: `${API_BASE_URL}/send-message`,

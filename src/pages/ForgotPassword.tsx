@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Helmet } from "react-helmet";
-import { authService } from "@/services/authService";
+import * as authService from "@/services/authService";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -20,11 +20,11 @@ const ForgotPassword = () => {
   const handleForgotPassword = async (email: string) => {
     setIsLoading(true);
     try {
-      await authService.forgotPassword({ email });
+      await authService.forgotPassword({ email, resetCode: "" });
       toast({
-        title: "Success",
+        title: "Error",
         description: "Verification code sent to your email.",
-        variant: "success",
+        variant: "destructive",
       });
       setStep(2);
     } catch (error: any) {
@@ -41,7 +41,7 @@ const ForgotPassword = () => {
   const handleVerifyCode = async (email: string, code: string) => {
     setIsLoading(true);
     try {
-      await authService.approveForgotPassword({ email, code });
+      await authService.adminApproveForgotPassword({ email, code });
       toast({
         title: "Success",
         description: "Code verified. You can now reset your password.",
@@ -88,7 +88,9 @@ const ForgotPassword = () => {
   return (
     <>
       <Helmet>
-        <title>Forgot Password | AccsMarket - Social Media Accounts Store</title>
+        <title>
+          Forgot Password | AccsMarket - Social Media Accounts Store
+        </title>
       </Helmet>
       <AuthLayout>
         <div className="flex flex-col space-y-2 text-center">

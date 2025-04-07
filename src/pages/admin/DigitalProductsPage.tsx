@@ -1,31 +1,22 @@
-
 import { useEffect, useState } from "react";
-import { 
-  getDigitalProducts, 
-  createDigitalProduct, 
-  updateDigitalProduct, 
+import {
+  getDigitalProducts,
+  createDigitalProduct,
+  updateDigitalProduct,
   deleteDigitalProduct,
-  uploadDigitalFiles
 } from "@/services/digitalProductsService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Upload,
-  FileText
-} from "lucide-react";
+import { Search, Plus, Edit, Trash2, Upload, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -55,15 +46,41 @@ interface DigitalProduct {
   stock_quantity?: number;
   data_format: string;
   important_notice: string;
-  files?: string[];
+  files?: File[];
 }
 
 const categoryOptions = [
-  "Course", "Ebook", "Template", "Software", "Audio", "Video", "Others"
+  "Facebook",
+  "Instagram",
+  "Twitter",
+  "TikTok",
+  "Snapchat",
+  "LinkedIn",
+  "Pinterest",
+  "YouTube",
+  "Reddit",
+  "Tumblr",
+  "Threads",
+  "Discord",
+  "Telegram",
+  "WhatsApp",
+  "WeChat",
+  "Clubhouse",
+  "BeReal",
+  "Mastodon",
+  "Vimeo",
+  "Quora",
 ];
 
 const dataFormatOptions = [
-  "PDF", "ZIP", "MP4", "MP3", "DOCX", "EPUB", "JPG", "PNG"
+  "PDF",
+  "ZIP",
+  "MP4",
+  "MP3",
+  "DOCX",
+  "EPUB",
+  "JPG",
+  "PNG",
 ];
 
 const DigitalProductsPage = () => {
@@ -77,72 +94,76 @@ const DigitalProductsPage = () => {
     description: "",
     data_format: "",
     important_notice: "",
+    stock_quantity: 0,
   });
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  
+
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['digitalProducts'],
+  const { data, isLoading } = useQuery<DigitalProduct[]>({
+    queryKey: ["digitalProducts"],
     queryFn: getDigitalProducts,
   });
 
   const createProductMutation = useMutation({
-    mutationFn: (productData: any) => createDigitalProduct(productData),
+    mutationFn: async (formData: FormData) => createDigitalProduct(formData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['digitalProducts'] });
+      queryClient.invalidateQueries({ queryKey: ["digitalProducts"] });
       toast.success("Digital product created successfully");
       setIsDialogOpen(false);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create product");
-    }
+    },
   });
 
   const updateProductMutation = useMutation({
-    mutationFn: (productData: DigitalProduct) => updateDigitalProduct(productData.id!, productData),
+    mutationFn: (productData: DigitalProduct) =>
+      updateDigitalProduct(productData.id!, productData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['digitalProducts'] });
+      queryClient.invalidateQueries({ queryKey: ["digitalProducts"] });
       toast.success("Digital product updated successfully");
       setIsDialogOpen(false);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update product");
-    }
+    },
   });
 
   const deleteProductMutation = useMutation({
     mutationFn: (productId: string) => deleteDigitalProduct(productId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['digitalProducts'] });
+      queryClient.invalidateQueries({ queryKey: ["digitalProducts"] });
       toast.success("Digital product deleted successfully");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete product");
-    }
+    },
   });
 
   const uploadFilesMutation = useMutation({
-    mutationFn: (formData: FormData) => uploadDigitalFiles(formData),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['digitalProducts'] });
+    mutationFn: async (formData: FormData) => {
+      return await createDigitalProduct(formData); // Ensure this function accepts FormData
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["digitalProducts"] });
       toast.success("Files uploaded successfully");
-      
-      // If we have product data from the file upload, create or update the product
-      if (data.product) {
-        setIsDialogOpen(false);
-      }
+      setIsDialogOpen(false);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to upload files");
-    }
+    },
   });
 
-  const filteredProducts = data?.products?.filter((product: DigitalProduct) => 
-    product.platform_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  const filteredProducts =
+    data?.filter(
+      (product: DigitalProduct) =>
+        product.platform_name
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase())
+    ) || [];
 
   const handleOpenDialog = (product?: DigitalProduct) => {
     if (product) {
@@ -156,6 +177,7 @@ const DigitalProductsPage = () => {
         description: "",
         data_format: "",
         important_notice: "",
+        stock_quantity: 0,
       });
       setIsEditing(false);
     }
@@ -163,12 +185,15 @@ const DigitalProductsPage = () => {
     setIsDialogOpen(true);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setCurrentProduct({
       ...currentProduct,
       [name]: name === "price" ? parseFloat(value) : value,
     });
+    // console.log(currentProduct);
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -179,60 +204,96 @@ const DigitalProductsPage = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedFiles(e.target.files);
+    const files = e.target.files;
+
+    if (files) {
+      // Allowed file types
+      const allowedTypes = [
+        "application/pdf", // PDF
+        "application/msword", // Word (DOC)
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // Word (DOCX)
+        // "application/zip", // ZIP
+        "text/plain", // TXT
+      ];
+
+      // Filter files based on allowed types
+      const filteredFiles = Array.from(files).filter((file) =>
+        allowedTypes.includes(file.type)
+      );
+
+      if (filteredFiles.length === 0) {
+        toast.error("Only PDF, Word, or TXT files are allowed.");
+        setSelectedFiles(null);
+        setCurrentProduct((prev) => ({
+          ...prev,
+          stock_quantity: 0,
+        }));
+        return;
+      }
+
+      // Set the filtered files
+      setSelectedFiles(filteredFiles as unknown as FileList);
+
+      setCurrentProduct((prev) => ({
+        ...prev,
+        stock_quantity: filteredFiles.length,
+      }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (selectedFiles && selectedFiles.length > 0) {
-      // If files selected, handle as file upload
-      const formData = new FormData();
-      
-      // Add product details to formData
-      formData.append("platform_name", currentProduct.platform_name);
-      formData.append("category", currentProduct.category);
-      formData.append("price", currentProduct.price.toString());
-      formData.append("description", currentProduct.description);
-      formData.append("data_format", currentProduct.data_format);
-      formData.append("important_notice", currentProduct.important_notice);
-      
-      // If editing, add product id
-      if (isEditing && currentProduct.id) {
-        formData.append("id", currentProduct.id);
-      }
-      
-      // Add files
-      for (let i = 0; i < selectedFiles.length; i++) {
-        formData.append("files", selectedFiles[i]);
-      }
-      
-      uploadFilesMutation.mutate(formData);
-    } else {
-      // Regular product creation/update without files
-      if (isEditing && currentProduct.id) {
-        updateProductMutation.mutate(currentProduct);
-      } else {
-        createProductMutation.mutate(currentProduct);
-      }
-    }
-  };
+    const formData = new FormData();
 
+    // Append product details to FormData
+    formData.append("platform_name", currentProduct.platform_name || "");
+    formData.append("category", currentProduct.category || "");
+    formData.append("price", currentProduct.price.toString() || "0");
+    formData.append("description", currentProduct.description || "");
+    formData.append("data_format", currentProduct.data_format || "");
+    formData.append("important_notice", currentProduct.important_notice || "");
+
+    // Append files to FormData
+    // if (selectedFiles && selectedFiles.length > 0) {
+    //   Array.from(selectedFiles).forEach((file) => {
+    //     formData.append("files", file);
+    //   });
+    // }
+    for (let i = 0; i < selectedFiles.length; i++) {
+      formData.append("files", selectedFiles[i]); // Ensure correct array name
+    }
+    console.log(formData);
+    // // Debugging: Log FormData content
+    // for (let [key, value] of formData.entries()) {
+    //   console.log(`${key}: ${value}`);
+    // }
+
+    // Call the mutation to upload files
+    createProductMutation.mutate(formData);
+  };
   const handleDeleteProduct = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this product? This action cannot be undone."
+      )
+    ) {
       deleteProductMutation.mutate(id);
     }
   };
 
-  const isMutating = createProductMutation.isPending || 
-                      updateProductMutation.isPending || 
-                      uploadFilesMutation.isPending;
+  const isMutating =
+    createProductMutation.isPending ||
+    updateProductMutation.isPending ||
+    uploadFilesMutation.isPending;
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Digital Products</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Digital Products
+          </h1>
           <p className="text-muted-foreground">
             Manage digital products and downloadable content
           </p>
@@ -286,22 +347,26 @@ const DigitalProductsPage = () => {
                 ) : (
                   filteredProducts.map((product: DigitalProduct) => (
                     <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.platform_name}</TableCell>
+                      <TableCell className="font-medium">
+                        {product.platform_name}
+                      </TableCell>
                       <TableCell>{product.category}</TableCell>
-                      <TableCell>${parseFloat(product.price.toString()).toFixed(2)}</TableCell>
+                      <TableCell>
+                        ${parseFloat(product.price.toString()).toFixed(2)}
+                      </TableCell>
                       <TableCell>{product.data_format}</TableCell>
                       <TableCell>{product.stock_quantity || "N/A"}</TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button 
-                          variant="ghost" 
+                        {/* <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleOpenDialog(product)}
                         >
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
+                        </Button> */}
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleDeleteProduct(product.id!)}
                         >
@@ -319,12 +384,14 @@ const DigitalProductsPage = () => {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-full mx-auto overflow-y-auto max-h-[90vh] p-6">
           <DialogHeader>
-            <DialogTitle>{isEditing ? "Edit Digital Product" : "Add New Digital Product"}</DialogTitle>
+            <DialogTitle>
+              {isEditing ? "Edit Digital Product" : "Add New Digital Product"}
+            </DialogTitle>
             <DialogDescription>
-              {isEditing 
-                ? "Make changes to the digital product below" 
+              {isEditing
+                ? "Make changes to the digital product below"
                 : "Fill in the details for the new digital product"}
             </DialogDescription>
           </DialogHeader>
@@ -343,15 +410,17 @@ const DigitalProductsPage = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Select 
+                <Select
                   value={currentProduct.category}
-                  onValueChange={(value) => handleSelectChange("category", value)}
+                  onValueChange={(value) =>
+                    handleSelectChange("category", value)
+                  }
                 >
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categoryOptions.map(category => (
+                    {categoryOptions.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
                       </SelectItem>
@@ -387,21 +456,32 @@ const DigitalProductsPage = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="data_format">Data Format</Label>
-                <Select 
+                <Textarea
+                  id="data_format"
+                  name="data_format"
                   value={currentProduct.data_format}
-                  onValueChange={(value) => handleSelectChange("data_format", value)}
+                  onChange={handleInputChange}
+                  placeholder="Enter data format"
+                  rows={3}
+                  required
+                />
+                {/* <Select
+                  value={currentProduct.data_format}
+                  onValueChange={(value) =>
+                    handleSelectChange("data_format", value)
+                  }
                 >
                   <SelectTrigger id="data_format">
                     <SelectValue placeholder="Select format" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dataFormatOptions.map(format => (
+                    {dataFormatOptions.map((format) => (
                       <SelectItem key={format} value={format}>
                         {format}
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
+                </Select> */}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="important_notice">Important Notice</Label>
@@ -436,7 +516,7 @@ const DigitalProductsPage = () => {
                       <p className="pl-1">or drag and drop</p>
                     </div>
                     <p className="text-xs text-gray-500">
-                      PDF, ZIP, MP4, or any other supported format
+                      PDF, WORD or TXT files
                     </p>
                   </div>
                 </div>
@@ -453,10 +533,18 @@ const DigitalProductsPage = () => {
                   </div>
                 )}
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="stock_quantity">Stock quantity</Label>:
+                <span> {currentProduct.stock_quantity} items selected</span>
+              </div>
             </div>
             <DialogFooter>
               <Button type="submit" disabled={isMutating}>
-                {isMutating ? "Processing..." : isEditing ? "Update Product" : "Create Product"}
+                {isMutating
+                  ? "Processing..."
+                  : isEditing
+                  ? "Update Product"
+                  : "Create Product"}
               </Button>
             </DialogFooter>
           </form>

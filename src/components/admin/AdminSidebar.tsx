@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -51,7 +50,7 @@ interface AdminSidebarProps {
 
 const AdminSidebar = ({ isOpen }: AdminSidebarProps) => {
   const { logout } = useAuth();
-  
+
   const handleLogout = async () => {
     await logout();
   };
@@ -65,29 +64,76 @@ const AdminSidebar = ({ isOpen }: AdminSidebarProps) => {
     >
       <div className="flex flex-col h-full">
         <div className="border-b border-border p-4">
-          <Link to="/admin/dashboard" className="flex items-center gap-2 font-bold text-xl">
+          <Link
+            to="/admin/dashboard"
+            className="flex items-center gap-2 font-bold text-xl"
+          >
             <LayoutDashboard className="h-5 w-5 text-primary" />
             <span>Admin Portal</span>
           </Link>
         </div>
-        
+
         <div className="flex-1 overflow-auto py-2 px-4">
           <nav className="flex flex-col gap-1">
-            <SidebarLink href="/admin/dashboard" icon={Home} label="Dashboard" />
-            <SidebarLink href="/admin/dashboard/users" icon={Users} label="Users Management" />
-            <SidebarLink href="/admin/dashboard/products" icon={Package} label="Products" />
-            <SidebarLink href="/admin/dashboard/digital-products" icon={FileText} label="Digital Products" />
-            <SidebarLink href="/admin/dashboard/homepage-management" icon={LayoutDashboard} label="Homepage" />
-            <SidebarLink href="/admin/dashboard/orders" icon={ShoppingCart} label="Orders" />
-            <SidebarLink href="/admin/dashboard/payments" icon={CreditCard} label="Payments" />
-            <SidebarLink href="/admin/dashboard/coupons" icon={Tag} label="Coupons" />
-            <SidebarLink href="/admin/dashboard/tickets" icon={MessageSquare} label="Support Tickets" />
-            <SidebarLink href="/admin/dashboard/wallet" icon={Wallet} label="Wallet Management" />
-            <SidebarLink href="/admin/dashboard/analytics" icon={BarChart3} label="Analytics" />
-            <SidebarLink href="/admin/dashboard/profile" icon={User} label="Profile" />
+            <SidebarLink
+              href="/admin/dashboard"
+              icon={Home}
+              label="Dashboard"
+            />
+            <SidebarLink
+              href="/admin/dashboard/users"
+              icon={Users}
+              label="Users Management"
+            />
+            {/* <SidebarLink href="/admin/dashboard/products" icon={Package} label="Products" /> */}
+            <SidebarLink
+              href="/admin/dashboard/digital-products"
+              icon={FileText}
+              label="Digital Products"
+            />
+            <SidebarLink
+              href="/admin/dashboard/homepage-management"
+              icon={LayoutDashboard}
+              label="Homepage"
+            />
+            <SidebarLink
+              href="/admin/dashboard/orders"
+              icon={ShoppingCart}
+              label="Orders"
+            />
+            <SidebarLink
+              href="/admin/dashboard/payments"
+              icon={CreditCard}
+              label="Payments"
+            />
+            <SidebarLink
+              href="/admin/dashboard/coupons"
+              icon={Tag}
+              label="Coupons"
+            />
+            <SidebarLink
+              href="/admin/dashboard/tickets"
+              icon={MessageSquare}
+              label="Support Tickets"
+            />
+            <SidebarLink
+              href="/admin/dashboard/wallet"
+              icon={Wallet}
+              label="Wallet Management"
+            />
+            <SidebarLink
+              href="/admin/dashboard/analytics"
+              icon={BarChart3}
+              label="Analytics"
+            />
+            <SidebarLink
+              href="/admin/dashboard/profile"
+              icon={User}
+              label="Profile"
+            />
           </nav>
         </div>
-        
+
         <div className="border-t border-border p-4">
           <button
             onClick={handleLogout}
