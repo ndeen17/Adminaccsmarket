@@ -1,26 +1,26 @@
 
 // Base API URL - reading from environment variable with fallback
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://aitool.asoroautomotive.com/api';
+export const API_BASE_URL = 'https://aitool.asoroautomotive.com/api';
 
 // Auth endpoints
 export const AUTH_ENDPOINTS = {
-  SIGNUP: `${API_BASE_URL}/user-signup`,
-  LOGIN: `${API_BASE_URL}/user-login`,
-  VERIFY_CODE: `${API_BASE_URL}/verify-user-code`,
-  LOGOUT: `${API_BASE_URL}/user-logout`,
-  FORGOT_PASSWORD: `${API_BASE_URL}/user-forgot-password`,
-  APPROVE_FORGOT_PASSWORD: `${API_BASE_URL}/approve-forgot-password`,
-  CHANGE_PASSWORD: `${API_BASE_URL}/change-password`,
-  VERIFY_USER: `${API_BASE_URL}/verifyUser`,
-  VERIFY_PASSWORD_CHANGE: `${API_BASE_URL}/verifyPasswordChange`,
+  SIGNUP: `${API_BASE_URL}/admin-signup`,
+  LOGIN: `${API_BASE_URL}/admin-login`,
+  VERIFY_CODE: `${API_BASE_URL}/verify-admin-code`,
+  LOGOUT: `${API_BASE_URL}/admin-logout`,
+  FORGOT_PASSWORD: `${API_BASE_URL}/admin-forgot-password`,
+  APPROVE_FORGOT_PASSWORD: `${API_BASE_URL}/approve-admin-forgot-password`,
+  CHANGE_PASSWORD: `${API_BASE_URL}/admmin-change-password`,
+  VERIFY_ADMIN: `${API_BASE_URL}/verifyAdmin`,
+  VERIFY_PASSWORD_CHANGE: `${API_BASE_URL}/verifyAdminPasswordChange`,
 };
 
 // User endpoints
-export const USER_ENDPOINTS = {
-  GET_ALL: `${API_BASE_URL}/users`,
-  GET_BY_ID: (id: string) => `${API_BASE_URL}/users/${id}`,
-  UPDATE: (id: string) => `${API_BASE_URL}/users/${id}`,
-  DELETE: (id: string) => `${API_BASE_URL}/users/${id}`,
+export const ADMIN_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/admins`,
+  GET_BY_ID: (id: string) => `${API_BASE_URL}/admins/${id}`,
+  UPDATE: (id: string) => `${API_BASE_URL}/admins/${id}`,
+  DELETE: (id: string) => `${API_BASE_URL}/admins/${id}`,
 };
 
 // Ticket endpoints

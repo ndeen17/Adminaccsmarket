@@ -1,11 +1,17 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { adminLogin } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/lib/toast";
 
@@ -26,25 +32,40 @@ const AdminLogin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email || !password) {
+      toast.error("input fields cannot be empty");
+      return;
+    }
     setIsLoading(true);
-
     try {
-      const { admin } = await adminLogin({ email, password });
-      login(admin as any); // Type assertion as Admin
-      navigate("/admin/dashboard");
-    } catch (error) {
-      toast.error("Invalid credentials. Please try again.");
+      const response = await adminLogin({ email, password });
+      const data = await response;
+      console.log(data);
+      // If the returned message is not "Please log in again.", it's a success
+      if (data.message) {
+        toast.error(data.message);
+      } else {
+        toast.error(data.status);
+        // Redirect to the signed-in homepage after 2 seconds.
+        setTimeout(() => {
+          navigate("/"); // Adjust this route if your signed-in homepage is registered elsewhere.
+        }, 2000);
+      }
+    } catch (error: any) {
+      toast.error("Login failed. Please try again.");
+      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
       <div className="w-full max-w-md animate-fade-in">
         <Card className="glass-card">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">
+              Admin Login
+            </CardTitle>
             <CardDescription className="text-center">
               Enter your credentials to access the admin dashboard
             </CardDescription>
@@ -66,7 +87,10 @@ const AdminLogin = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link to="/admin/forgot-password" className="text-xs text-primary hover:underline">
+                  <Link
+                    to="/admin/forgot-password"
+                    className="text-xs text-primary hover:underline"
+                  >
                     Forgot password?
                   </Link>
                 </div>

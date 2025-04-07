@@ -1,12 +1,17 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/lib/toast";
-import { getAdminProfile, updateAdminProfile } from "@/services/authService";
+import { getAdminProfile } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import { User, Mail, Phone, MapPin, Calendar } from "lucide-react";
 
@@ -27,7 +32,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await getAdminProfile();
+        const response = await getAdminProfile(admin?.id);
         setProfile(response.admin);
         setFormData({
           name: response.admin.name || "",
@@ -47,26 +52,25 @@ const ProfilePage = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const response = await updateAdminProfile(formData);
-      setProfile(response.admin);
-      toast.success("Profile updated successfully");
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Error updating profile:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    // e.preventDefault();
+    // setIsLoading(true);
+    // try {
+    //   // const response = await updateAdminProfile(formData);
+    //   // setProfile(response.admin);
+    //   // toast.success("Profile updated successfully");
+    //   setIsEditing(false);
+    // } catch (error) {
+    //   console.error("Error updating profile:", error);
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   if (isLoading && !profile.id) {
@@ -88,15 +92,16 @@ const ProfilePage = () => {
         </div>
         <div className="flex gap-2">
           {!isEditing ? (
-            <Button onClick={() => setIsEditing(true)}>
-              Edit Profile
-            </Button>
+            <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
           ) : (
             <Button variant="outline" onClick={() => setIsEditing(false)}>
               Cancel
             </Button>
           )}
-          <Button variant="outline" onClick={() => navigate("/admin/change-password")}>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/admin/change-password")}
+          >
             Change Password
           </Button>
         </div>
@@ -106,9 +111,7 @@ const ProfilePage = () => {
         <Card className="glass-card md:col-span-1">
           <CardHeader>
             <CardTitle>Account Information</CardTitle>
-            <CardDescription>
-              Your basic account details
-            </CardDescription>
+            <CardDescription>Your basic account details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
@@ -129,14 +132,18 @@ const ProfilePage = () => {
               <Phone className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Phone</p>
-                <p className="text-sm text-muted-foreground">{profile.phone || "Not provided"}</p>
+                <p className="text-sm text-muted-foreground">
+                  {profile.phone || "Not provided"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <MapPin className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Address</p>
-                <p className="text-sm text-muted-foreground">{profile.address || "Not provided"}</p>
+                <p className="text-sm text-muted-foreground">
+                  {profile.address || "Not provided"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -144,8 +151,8 @@ const ProfilePage = () => {
               <div>
                 <p className="text-sm font-medium">Joined</p>
                 <p className="text-sm text-muted-foreground">
-                  {profile.createdAt 
-                    ? new Date(profile.createdAt).toLocaleDateString() 
+                  {profile.createdAt
+                    ? new Date(profile.createdAt).toLocaleDateString()
                     : "Not available"}
                 </p>
               </div>
@@ -155,10 +162,12 @@ const ProfilePage = () => {
 
         <Card className="glass-card md:col-span-2">
           <CardHeader>
-            <CardTitle>{isEditing ? "Edit Profile" : "Profile Details"}</CardTitle>
+            <CardTitle>
+              {isEditing ? "Edit Profile" : "Profile Details"}
+            </CardTitle>
             <CardDescription>
-              {isEditing 
-                ? "Update your profile information" 
+              {isEditing
+                ? "Update your profile information"
                 : "View your detailed profile information"}
             </CardDescription>
           </CardHeader>
@@ -213,14 +222,29 @@ const ProfilePage = () => {
             ) : (
               <div className="prose max-w-none dark:prose-invert">
                 <p>
-                  Hello, {profile.name || admin?.name || "Admin"}. You are logged in as an administrator with access to manage the entire platform. Your account was created on {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "N/A"}.
+                  Hello, {profile.name || admin?.name || "Admin"}. You are
+                  logged in as an administrator with access to manage the entire
+                  platform. Your account was created on{" "}
+                  {profile.createdAt
+                    ? new Date(profile.createdAt).toLocaleDateString()
+                    : "N/A"}
+                  .
                 </p>
                 <p>
-                  From your dashboard, you can manage users, products, orders, tickets, and all other aspects of the platform. Please ensure you follow security best practices when making changes.
+                  From your dashboard, you can manage users, products, orders,
+                  tickets, and all other aspects of the platform. Please ensure
+                  you follow security best practices when making changes.
                 </p>
                 <p>
-                  If you need to update your password for security reasons, you can use the 
-                  <Link to="/admin/change-password" className="text-primary hover:underline"> Change Password </Link>
+                  If you need to update your password for security reasons, you
+                  can use the
+                  <Link
+                    to="/admin/change-password"
+                    className="text-primary hover:underline"
+                  >
+                    {" "}
+                    Change Password{" "}
+                  </Link>
                   option.
                 </p>
               </div>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { adminLogin } from "@/services/authService";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -25,30 +26,26 @@ const LoginForm = () => {
     }
     setIsLoading(true);
     try {
-      const response = await fetch("https://aitool.asoroautomotive.com/api/user-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await adminLogin({ email, password });
       const data = await response.json();
+      console.log(data);
       // If the returned message is not "Please log in again.", it's a success
-      if (data.message !== "Please log in again.") {
-        toast({
-          title: "Success",
-          description: "Logged in successfully",
-          variant: "success",
-        });
-        // Redirect to the signed-in homepage after 2 seconds.
-        setTimeout(() => {
-          navigate("/user-home"); // Adjust this route if your signed-in homepage is registered elsewhere.
-        }, 2000);
-      } else {
+      if (data.message) {
         toast({
           title: "Error",
           description: data.message,
           variant: "destructive",
         });
+      } else {
+        toast({
+          title: "Success",
+          description: "Logged in successfully",
+          variant: "default",
+        });
+        // Redirect to the signed-in homepage after 2 seconds.
+        // setTimeout(() => {
+        //   navigate("/user-home"); // Adjust this route if your signed-in homepage is registered elsewhere.
+        // }, 3000);
       }
     } catch (error: any) {
       toast({

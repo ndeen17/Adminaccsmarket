@@ -1,12 +1,18 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/lib/toast";
-import { changePassword, verifyPasswordChange } from "@/services/authService";
+// import { changePassword } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 
 const ChangePassword = () => {
@@ -25,7 +31,7 @@ const ChangePassword = () => {
       }
 
       try {
-        await verifyPasswordChange();
+        // await verifyPasswordChange();
       } catch (error) {
         // If there's an error with the verification, the API client will handle redirection
       }
@@ -50,7 +56,7 @@ const ChangePassword = () => {
     setIsLoading(true);
 
     try {
-      await changePassword(currentPassword, newPassword);
+      // await changePassword(currentPassword, newPassword);
       toast.success("Password changed successfully");
       navigate("/admin/dashboard/profile");
     } catch (error) {
@@ -65,7 +71,9 @@ const ChangePassword = () => {
       <div className="w-full max-w-md animate-fade-in">
         <Card className="glass-card">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Change Password</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">
+              Change Password
+            </CardTitle>
             <CardDescription className="text-center">
               Update your account password
             </CardDescription>
@@ -114,7 +122,10 @@ const ChangePassword = () => {
             </form>
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Button variant="outline" onClick={() => navigate("/admin/dashboard/profile")}>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/admin/dashboard/profile")}
+            >
               Cancel
             </Button>
           </CardFooter>

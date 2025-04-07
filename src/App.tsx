@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -52,24 +51,33 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Index />} />
-            
+
             {/* Admin Auth Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/signup" element={<AdminSignup />} />
             <Route path="/admin/forgot-password" element={<ForgotPassword />} />
             <Route path="/admin/reset-password" element={<ResetPassword />} />
             <Route path="/admin/change-password" element={<ChangePassword />} />
-            
+
             {/* Redirect /admin to login page */}
-            <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-            
+            <Route
+              path="/admin"
+              element={<Navigate to="/admin/login" replace />}
+            />
+
             {/* Protected Admin Routes */}
             <Route path="/admin/dashboard/*" element={<AdminLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="products" element={<ProductsPage />} />
-              <Route path="digital-products" element={<DigitalProductsPage />} />
-              <Route path="homepage-management" element={<HomepageManagementPage />} />
+              <Route
+                path="digital-products"
+                element={<DigitalProductsPage />}
+              />
+              <Route
+                path="homepage-management"
+                element={<HomepageManagementPage />}
+              />
               <Route path="orders" element={<OrdersPage />} />
               <Route path="payments" element={<PaymentsPage />} />
               <Route path="coupons" element={<CouponsPage />} />
@@ -79,7 +87,7 @@ const App = () => (
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="profile" element={<ProfilePage />} />
             </Route>
-            
+
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>

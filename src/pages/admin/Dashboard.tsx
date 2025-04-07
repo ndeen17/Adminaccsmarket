@@ -1,9 +1,16 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMetrics, getOrders, getUsers } from "@/services/adminService";
 import { Users, ShoppingCart, DollarSign, TrendingUp } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -15,25 +22,27 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [metricsResponse, usersResponse, ordersResponse] = await Promise.all([
-          getMetrics(),
-          getUsers(),
-          getOrders()
-        ]);
-        
+        const [metricsResponse, usersResponse, ordersResponse] =
+          await Promise.all([getMetrics(), getUsers(), getOrders()]);
+
         setMetrics(metricsResponse.metrics);
         setUsers(usersResponse.users);
         setOrders(ordersResponse.orders);
-        
+
         // Process metrics for chart data
-        const salesMetrics = metricsResponse.metrics.filter((metric: any) => metric.name === "sales");
-        
+        const salesMetrics = metricsResponse.metrics.filter(
+          (metric: any) => metric.name === "sales"
+        );
+
         // Format data for chart
         const formattedData = salesMetrics.map((metric: any) => ({
-          date: new Date(metric.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-          sales: metric.value
+          date: new Date(metric.date).toLocaleDateString("en-US", {
+            month: "short",
+            year: "numeric",
+          }),
+          sales: metric.value,
         }));
-        
+
         setSalesData(formattedData);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -41,7 +50,7 @@ const Dashboard = () => {
         setIsLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -49,14 +58,19 @@ const Dashboard = () => {
   const totalUsers = users.length;
   const totalOrders = orders.length;
   const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-  const salesGrowth = salesData.length > 1 
-    ? ((salesData[salesData.length - 1]?.sales - salesData[0]?.sales) / salesData[0]?.sales * 100).toFixed(1)
-    : "0";
+  const salesGrowth =
+    salesData.length > 1
+      ? (
+          ((salesData[salesData.length - 1]?.sales - salesData[0]?.sales) /
+            salesData[0]?.sales) *
+          100
+        ).toFixed(1)
+      : "0";
 
   return (
     <div className="space-y-6 animate-fade-in">
       <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-      
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -64,26 +78,30 @@ const Dashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? "..." : totalUsers}</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : totalUsers}
+            </div>
             <p className="text-xs text-muted-foreground">
               +12% from last month
             </p>
           </CardContent>
         </Card>
-        
+
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? "..." : totalOrders}</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : totalOrders}
+            </div>
             <p className="text-xs text-muted-foreground">
               +18% from last month
             </p>
           </CardContent>
         </Card>
-        
+
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
@@ -98,7 +116,7 @@ const Dashboard = () => {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Growth</CardTitle>
@@ -114,7 +132,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
         <Card className="col-span-2 glass-card">
           <CardHeader>
@@ -148,7 +166,7 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
-        
+
         <Card className="glass-card">
           <CardHeader>
             <CardTitle>Recent Orders</CardTitle>
@@ -163,7 +181,10 @@ const Dashboard = () => {
             ) : (
               <div className="space-y-4">
                 {orders.slice(0, 4).map((order) => (
-                  <div key={order.id} className="flex justify-between items-center">
+                  <div
+                    key={order.id}
+                    className="flex justify-between items-center"
+                  >
                     <div>
                       <p className="text-sm font-medium">Order #{order.id}</p>
                       <p className="text-xs text-muted-foreground">
@@ -171,8 +192,16 @@ const Dashboard = () => {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium">${order.totalAmount.toFixed(2)}</p>
-                      <p className={`text-xs ${order.status === 'completed' ? 'text-green-500' : 'text-amber-500'}`}>
+                      <p className="text-sm font-medium">
+                        ${order.totalAmount.toFixed(2)}
+                      </p>
+                      <p
+                        className={`text-xs ${
+                          order.status === "completed"
+                            ? "text-green-500"
+                            : "text-amber-500"
+                        }`}
+                      >
                         {order.status}
                       </p>
                     </div>
