@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { adminLogin } from "@/services/authService";
+import { adminLogin, verifyAdmin } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,26 @@ const AdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  // useEffect(() => {
+  //   const checkAuthStatus = async () => {
+  //     try {
+  //       const admin = await verifyAdmin();
+  //       console.log(admin);
+  //       if (admin && admin.admin_id) {
+  //         // setAdmin(admin as Admin);
+  //         // setIsAuthenticated(true);
+  //       }
+  //     } catch (error) {
+  //       // setAdmin(null);
+  //       // setIsAuthenticated(true);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   checkAuthStatus();
+  // }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
