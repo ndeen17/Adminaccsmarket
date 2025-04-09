@@ -1,24 +1,25 @@
-
 import { useEffect, useState } from "react";
-import { getUsers } from "@/services/userService";
+import { getAllUsers } from "@/services/userService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Search, Plus, Edit, Trash2 } from "lucide-react";
 
 interface User {
   id: string;
-  name: string;
+  username: string;
   email: string;
-  createdAt: string;
+  created_at: string;
+  acc_status: string;
+  wallet_balance: Number;
 }
 
 const UsersPage = () => {
@@ -29,8 +30,9 @@ const UsersPage = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await getUsers();
-        setUsers(response.users);
+        const response = await getAllUsers();
+        console.log(response);
+        setUsers(response);
       } catch (error) {
         console.error("Error fetching users:", error);
       } finally {
@@ -40,11 +42,10 @@ const UsersPage = () => {
 
     fetchUsers();
   }, []);
-
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  console.log(users);
+  const filteredUsers = users.filter((user) =>
+    // user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -56,10 +57,10 @@ const UsersPage = () => {
             Manage and view all registered users
           </p>
         </div>
-        <Button className="md:w-auto">
+        {/* <Button className="md:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Add User
-        </Button>
+        </Button> */}
       </div>
 
       <Card className="glass-card">
@@ -87,9 +88,11 @@ const UsersPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  {/* <TableHead>Name</TableHead> */}
                   <TableHead>Email</TableHead>
                   <TableHead>Joined</TableHead>
+                  <TableHead>Wallet balance</TableHead>
+                  <TableHead>Account status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -103,16 +106,20 @@ const UsersPage = () => {
                 ) : (
                   filteredUsers.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
+                      {/* <TableCell className="font-medium">
+                        {user.username}
+                      </TableCell> */}
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        {new Date(user.createdAt).toLocaleDateString()}
+                        {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
+                      <TableCell>${Number(user.wallet_balance)}</TableCell>
+                      <TableCell>{user.acc_status}</TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button variant="ghost" size="icon">
+                        {/* <Button variant="ghost" size="icon">
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
-                        </Button>
+                        </Button> */}
                         <Button variant="ghost" size="icon">
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Delete</span>

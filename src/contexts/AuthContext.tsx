@@ -10,10 +10,12 @@ import { verifyAdmin } from "@/services/authService";
 import { toast } from "@/lib/toast";
 
 interface Admin {
-  id: string;
-  name: string;
+  admin_id: string;
+  username: string;
   email: string;
   role: string;
+  wallet_balance: number;
+  created_at: string;
 }
 
 interface AuthContextType {

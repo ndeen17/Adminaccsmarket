@@ -31,6 +31,14 @@ export interface PaymentResponse {
   status?: string;
   sessionId?: string;
   error?: string;
+  amount: number;
+  created_at: string;
+  payment_gateway: string;
+  payment_id: string;
+  payment_status: string;
+ payment_type: string;
+  transaction_type:string
+   user_id:string
 }
 
 export const createCryptoPayment = async (paymentData: CryptoPaymentRequest): Promise<PaymentResponse> => {
@@ -79,6 +87,25 @@ export const savePaymentDetails = async (paymentData: PaymentSaveRequest): Promi
     return response.data;
   } catch (error) {
     console.error('Error saving payment details:', error);
+    throw error;
+  }
+};
+
+export const getAllPayments = async (): Promise<{ payments: any[] }> => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/payments`);
+    return response.data
+  } catch (error) {
+    console.error('Error getting user payments:', error);
+    throw error;
+  }
+};
+export const deletePayment = async (userId: string): Promise<{ payments: any[] }> => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/payments/${userId}`);
+    return response.data
+  } catch (error) {
+    console.error('Error deleting payments:', error);
     throw error;
   }
 };

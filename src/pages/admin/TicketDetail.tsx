@@ -1,9 +1,24 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getTicketById, closeTicket, assignTicket } from "@/services/ticketsService";
-import { getMessagesByTicketId, sendMessageAsAdmin, markMessageSeenByAdmin, uploadMessageFiles } from "@/services/messagesService";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
+import {
+  getTicketById,
+  closeTicket,
+  assignTicket,
+} from "@/services/ticketsService";
+import {
+  getMessagesByTicketId,
+  sendMessageAsAdmin,
+  markMessageSeenByAdmin,
+  uploadMessageFiles,
+} from "@/services/messagesService";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,17 +26,24 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/lib/toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { MessageSquare, ChevronLeft, Paperclip, Send, UserCheck, CheckCircle } from "lucide-react";
+import {
+  MessageSquare,
+  ChevronLeft,
+  Paperclip,
+  Send,
+  UserCheck,
+  CheckCircle,
+} from "lucide-react";
 
 interface Message {
   id: string;
   message: string;
   ticketId: string;
   senderId: string;
-  adminId?: string;
+  admin_id?: string;
   messageType: string;
   seen: boolean;
-  createdAt: string;
+  time_received: string;
 }
 
 const TicketDetail = () => {
@@ -33,26 +55,27 @@ const TicketDetail = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { admin } = useAuth();
-  
+  const [fetchedImage, setFetchedImage] = useState<Record<string, string>>({});
+
   const queryClient = useQueryClient();
 
   const { data: ticketData, isLoading: isTicketLoading } = useQuery({
-    queryKey: ['ticket', ticketId],
+    queryKey: ["ticket", ticketId],
     queryFn: () => getTicketById(ticketId!),
     enabled: !!ticketId,
   });
 
   const { data: messagesData, isLoading: isMessagesLoading } = useQuery({
-    queryKey: ['messages', ticketId],
+    queryKey: ["messages", ticketId],
     queryFn: () => getMessagesByTicketId(ticketId!),
     enabled: !!ticketId,
-    refetchInterval: 10000, // Refetch messages every 10 seconds
+    refetchInterval: 40000, // Refetch messages every 10 seconds
   });
 
   const sendMessageMutation = useMutation({
     mutationFn: (messageData: any) => sendMessageAsAdmin(messageData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ["messages", ticketId] });
       setNewMessage("");
       setFiles(null);
       if (fileInputRef.current) {
@@ -61,8 +84,42 @@ const TicketDetail = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to send message");
-    }
+    },
   });
+
+  // Fetch images for messages starting with "get-image"
+  useEffect(() => {
+    if (messagesData?.result) {
+      messagesData.result.forEach((message: Message) => {
+        if (message.message.startsWith("get-image")) {
+          const fetchImage = async (link: string) => {
+            try {
+              const response = await fetch(
+                `https://aitool.asoroautomotive.com/api/${link}`,
+                {
+                  method: "GET",
+                  credentials: "include",
+                }
+              );
+
+              if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+              }
+              const imageSrc = await response.text();
+              setFetchedImage((prev) => ({
+                ...prev,
+                [message.id]: imageSrc, // Store the image source by message ID
+              }));
+            } catch (error) {
+              console.error("Error fetching image:", error);
+            }
+          };
+
+          fetchImage(message.message);
+        }
+      });
+    }
+  }, [messagesData?.result]);
 
   const uploadFilesMutation = useMutation({
     mutationFn: (formData: FormData) => uploadMessageFiles(formData),
@@ -71,65 +128,66 @@ const TicketDetail = () => {
       sendMessageMutation.mutate({
         ticket_id: ticketId,
         message: data.fileUrls.join(", "),
-        admin_id: admin?.id,
-        message_type: "file"
+        admin_id: admin?.admin_id,
+        message_type: "file",
       });
       setIsUploading(false);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to upload files");
       setIsUploading(false);
-    }
+    },
   });
 
   const markSeenMutation = useMutation({
     mutationFn: (messageId: string) => markMessageSeenByAdmin(messageId),
     onError: (error: any) => {
       console.error("Failed to mark message as seen:", error);
-    }
+    },
   });
 
   const closeTicketMutation = useMutation({
     mutationFn: (id: string) => closeTicket(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ["ticket", ticketId] });
       toast.success("Ticket closed successfully");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to close ticket");
-    }
+    },
   });
 
   const assignTicketMutation = useMutation({
-    mutationFn: (id: string) => assignTicket(id, admin?.id || ""),
+    mutationFn: (id: string) => assignTicket(id, admin?.admin_id || ""),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ["ticket", ticketId] });
       toast.success("Ticket assigned to you");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to assign ticket");
-    }
+    },
   });
 
   // Mark unread messages as seen
   useEffect(() => {
-    if (messagesData?.messages) {
-      messagesData.messages.forEach((message: Message) => {
-        if (!message.seen && message.senderId !== admin?.id) {
+    if (messagesData?.result) {
+      messagesData.result.forEach((message: Message) => {
+        if (!message.seen && message.senderId !== admin?.admin_id) {
           markSeenMutation.mutate(message.id);
         }
       });
     }
-  }, [messagesData?.messages, admin?.id]);
+  }, [messagesData?.result, admin?.admin_id]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
+    console.log(messagesData);
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messagesData?.messages]);
+  }, [messagesData?.result]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newMessage.trim() && (!files || files.length === 0)) {
       toast.error("Please enter a message or attach a file");
       return;
@@ -138,20 +196,20 @@ const TicketDetail = () => {
     if (files && files.length > 0) {
       // Handle file upload
       setIsUploading(true);
-      
+
       const formData = new FormData();
       for (let i = 0; i < files.length; i++) {
         formData.append("files", files[i]);
       }
-      
+
       uploadFilesMutation.mutate(formData);
     } else {
       // Handle text message
       sendMessageMutation.mutate({
         ticket_id: ticketId,
         message: newMessage,
-        admin_id: admin?.id,
-        message_type: "text"
+        admin_id: admin?.admin_id,
+        message_type: "text",
       });
     }
   };
@@ -184,20 +242,26 @@ const TicketDetail = () => {
   }
 
   const ticket = ticketData?.ticket;
-  const messages = messagesData?.messages || [];
-  const isClosed = ticket?.status.toLowerCase() === 'closed';
-  const isAssigned = !!ticket?.adminId;
-  const isAssignedToCurrentAdmin = ticket?.adminId === admin?.id;
+  const messages = messagesData?.result || [];
+  const isClosed = ticket?.status.toLowerCase() === "closed";
+  const isAssigned = !!ticket?.admin_id;
+  const isAssignedToCurrentAdmin = ticket?.admin_id === admin?.admin_id;
 
   return (
     <div className="space-y-6 animate-fade-in h-full flex flex-col">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => navigate("/admin/dashboard/tickets")}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate("/admin/dashboard/tickets")}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{ticket?.title}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {ticket?.title}
+            </h1>
             <p className="text-muted-foreground">
               Ticket #{ticket?.id} - {ticket?.status}
             </p>
@@ -205,8 +269,8 @@ const TicketDetail = () => {
         </div>
         <div className="flex gap-2">
           {!isAssigned && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleAssignTicket}
               disabled={isClosed || assignTicketMutation.isPending}
             >
@@ -215,8 +279,8 @@ const TicketDetail = () => {
             </Button>
           )}
           {!isClosed && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleCloseTicket}
               disabled={closeTicketMutation.isPending}
             >
@@ -245,51 +309,64 @@ const TicketDetail = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {messages.map((message: Message) => {
-                    const isAdmin = message.adminId === admin?.id;
-                    return (
-                      <div 
-                        key={message.id} 
-                        className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div className={`flex ${isAdmin ? 'flex-row-reverse' : 'flex-row'} items-start gap-2 max-w-[80%]`}>
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>
-                              {isAdmin ? 'A' : 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div 
-                              className={`px-4 py-2 rounded-lg ${
-                                isAdmin 
-                                  ? 'bg-primary text-primary-foreground' 
-                                  : 'bg-muted'
-                              }`}
-                            >
-                              {message.messageType === 'file' ? (
-                                <div>
-                                  <a 
-                                    href={message.message} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-sm underline"
-                                  >
-                                    <Paperclip className="h-4 w-4" />
-                                    Attachment
-                                  </a>
-                                </div>
-                              ) : (
-                                <p>{message.message}</p>
-                              )}
+                  {messages
+                    .slice() // Create a shallow copy of the array to avoid mutating the original
+                    .sort(
+                      (a: Message, b: Message) =>
+                        new Date(a.time_received).getTime() -
+                        new Date(b.time_received).getTime()
+                    ) // Sort by time_received
+                    .map((message: Message) => {
+                      const isAdmin =
+                        message.admin_id === admin?.admin_id ||
+                        message.admin_id === "admin";
+                      return (
+                        <div
+                          key={message.id}
+                          className={`flex ${
+                            !isAdmin ? "justify-end" : "justify-start"
+                          }`}
+                        >
+                          <div
+                            className={`flex ${
+                              !isAdmin ? "flex-row-reverse" : "flex-row"
+                            } items-start gap-2 max-w-[80%]`}
+                          >
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback>
+                                {!isAdmin ? "A" : "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div
+                                className={`px-4 py-2 rounded-lg ${
+                                  !isAdmin
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted"
+                                }`}
+                              >
+                                {message.message.startsWith("get-image") ? (
+                                  <img
+                                    src={fetchedImage[message.id]}
+                                    alt="Image loading ..."
+                                    className="max-w-full h-auto"
+                                  />
+                                ) : (
+                                  <p>{message.message}</p>
+                                )}
+                              </div>
+                              <p
+                                className={`text-xs mt-1 text-muted-foreground ${
+                                  !isAdmin ? "text-right" : "text-left"
+                                }`}
+                              >
+                                {formatTimestamp(message.time_received)}
+                              </p>
                             </div>
-                            <p className={`text-xs mt-1 text-muted-foreground ${isAdmin ? 'text-right' : 'text-left'}`}>
-                              {formatTimestamp(message.createdAt)}
-                            </p>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                   <div ref={messagesEndRef} />
                 </div>
               )}
@@ -298,16 +375,20 @@ const TicketDetail = () => {
               <form onSubmit={handleSendMessage} className="w-full">
                 <div className="flex gap-2">
                   <Textarea
-                    placeholder={isClosed ? "This ticket is closed" : "Type your message here..."}
+                    placeholder={
+                      isClosed
+                        ? "This ticket is closed"
+                        : "Type your message here..."
+                    }
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     disabled={isClosed || !isAssignedToCurrentAdmin}
                     className="flex-1 min-h-[60px]"
                   />
                   <div className="flex flex-col gap-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       size="icon"
                       disabled={isClosed || !isAssignedToCurrentAdmin}
                       onClick={() => fileInputRef.current?.click()}
@@ -315,14 +396,15 @@ const TicketDetail = () => {
                       <Paperclip className="h-4 w-4" />
                       <span className="sr-only">Attach file</span>
                     </Button>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       size="icon"
                       disabled={
-                        isClosed || 
-                        isUploading || 
-                        sendMessageMutation.isPending || 
-                        (!newMessage.trim() && (!files || files.length === 0)) ||
+                        isClosed ||
+                        isUploading ||
+                        sendMessageMutation.isPending ||
+                        (!newMessage.trim() &&
+                          (!files || files.length === 0)) ||
                         !isAssignedToCurrentAdmin
                       }
                     >
@@ -341,12 +423,15 @@ const TicketDetail = () => {
                 {files && files.length > 0 && (
                   <div className="mt-2 text-sm">
                     <span className="font-medium">Selected files:</span>{" "}
-                    {Array.from(files).map(file => file.name).join(", ")}
+                    {Array.from(files)
+                      .map((file) => file.name)
+                      .join(", ")}
                   </div>
                 )}
                 {!isAssignedToCurrentAdmin && !isClosed && (
                   <p className="text-sm text-amber-500 mt-2">
-                    You need to assign this ticket to yourself before you can reply.
+                    You need to assign this ticket to yourself before you can
+                    reply.
                   </p>
                 )}
               </form>
@@ -361,25 +446,39 @@ const TicketDetail = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Status
+                </p>
                 <p className="font-medium capitalize">{ticket?.status}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Created On</p>
-                <p className="font-medium">{new Date(ticket?.createdAt).toLocaleDateString()}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Created On
+                </p>
+                <p className="font-medium">
+                  {new Date(ticket?.created_at).toLocaleDateString()}
+                </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Submitted By</p>
-                <p className="font-medium">{ticket?.userId || "Unknown"}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Submitted By
+                </p>
+                <p className="font-medium">{ticket?.user_id || "Unknown"}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Assigned To</p>
-                <p className="font-medium">{ticket?.adminId || "Unassigned"}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Assigned To
+                </p>
+                <p className="font-medium">
+                  {ticket?.admin_id || "Unassigned"}
+                </p>
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Description</p>
+              {/* <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Description
+                </p>
                 <p className="text-sm">{ticket?.description}</p>
-              </div>
+              </div> */}
             </CardContent>
           </Card>
         </div>

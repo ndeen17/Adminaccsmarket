@@ -2,13 +2,7 @@
 import axios from 'axios';
 import { API_BASE_URL } from '@/config/api';
 
-export const ORDER_ENDPOINTS = {
-  CREATE: `${API_BASE_URL}/create-order`,
-  GET: (id: string) => `${API_BASE_URL}/order/${id}`,
-  LIST:(id: string) => `${API_BASE_URL}/orders/user/${id}`,
-  UPDATE: `${API_BASE_URL}/update-order`,
-  DELETE: (id: string) => `${API_BASE_URL}/order/${id}`,
-};
+import { ORDER_ENDPOINTS } from '@/config/api';
 
 export const createOrder = async (orderData: any) => {
   try {
@@ -32,9 +26,10 @@ export const getOrder = async (orderId: string) => {
 
 export const getOrders = async () => {
   try {
-    const response = await getAllPayments();
-    console.log(response);
-    return response
+    const response = await axios.get(`${API_BASE_URL}/orders`);
+    const orders = response.data
+  console.log(orders)
+    return orders.orders;
   } catch (error) {
     console.error('Error fetching orders:', error);
     throw error;
@@ -64,7 +59,7 @@ export const deleteOrder = async (orderId: string) => {
 const getAllPayments = async (): Promise<{ payments: any[] }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/payments`);
-    return response.data;
+    return response.data
   } catch (error) {
     console.error('Error getting user payments:', error);
     throw error;

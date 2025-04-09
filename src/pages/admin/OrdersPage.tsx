@@ -1,23 +1,17 @@
-
 import { useEffect, useState } from "react";
-import { getOrders, updateOrder, deleteOrder } from "@/services/ordersService";
+import { getOrders, updateOrder, deleteOrder } from "@/services/orderService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  Search,
-  Edit, 
-  Trash2, 
-  Eye
-} from "lucide-react";
+import { Search, Edit, Trash2, Eye } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -38,12 +32,13 @@ import { toast } from "@/lib/toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Order {
-  id: string;
+  order_id: string;
   status: string;
-  totalAmount: number;
+  amount: number;
   items?: any[];
-  buyerId?: string;
-  createdAt: string;
+  buyer_id?: string;
+  buyer_email?: string;
+  created_at: string;
   updatedAt?: string;
 }
 
@@ -62,42 +57,60 @@ const OrdersPage = () => {
   const [isViewMode, setIsViewMode] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderStatus, setOrderStatus] = useState("");
-  
+  const [orders, setOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const ordersResponse = await getOrders();
+        // console.log(ordersResponse);
+        setOrders(ordersResponse);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['orders'],
+    queryKey: ["orders"],
     queryFn: getOrders,
   });
 
   const updateOrderMutation = useMutation({
     mutationFn: (orderData: any) => updateOrder(orderData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
       toast.success("Order updated successfully");
       setIsDialogOpen(false);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update order");
-    }
+    },
   });
 
   const deleteOrderMutation = useMutation({
     mutationFn: (orderId: string) => deleteOrder(orderId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
       toast.success("Order deleted successfully");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete order");
-    }
+    },
   });
 
-  const filteredOrders = data?.orders?.filter((order: Order) => 
-    order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (order.buyerId && order.buyerId.toLowerCase().includes(searchQuery.toLowerCase()))
-  ) || [];
+  const filteredOrders =
+    orders?.filter(
+      (order: Order) =>
+        order.order_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (order.buyer_id &&
+          order.buyer_id.toLowerCase().includes(searchQuery.toLowerCase()))
+    ) || [];
 
   const handleOpenDialog = (order: Order, viewMode = false) => {
     setSelectedOrder(order);
@@ -108,15 +121,19 @@ const OrdersPage = () => {
 
   const handleUpdateOrder = () => {
     if (!selectedOrder) return;
-    
+
     updateOrderMutation.mutate({
-      id: selectedOrder.id,
-      status: orderStatus
+      id: selectedOrder.order_id,
+      status: orderStatus,
     });
   };
 
   const handleDeleteOrder = (orderId: string) => {
-    if (window.confirm("Are you sure you want to delete this order? This action cannot be undone.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this order? This action cannot be undone."
+      )
+    ) {
       deleteOrderMutation.mutate(orderId);
     }
   };
@@ -134,9 +151,7 @@ const OrdersPage = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-          <p className="text-muted-foreground">
-            Manage customer orders
-          </p>
+          <p className="text-muted-foreground">Manage customer orders</p>
         </div>
       </div>
 
@@ -181,44 +196,53 @@ const OrdersPage = () => {
                   </TableRow>
                 ) : (
                   filteredOrders.map((order: Order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>
-                        {new Date(order.createdAt).toLocaleDateString()}
+                    <TableRow key={order.order_id}>
+                      <TableCell className="font-medium">
+                        {order.order_id}
                       </TableCell>
                       <TableCell>
-                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                          order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                          order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        {new Date(order.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            order.status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : order.status === "cancelled"
+                              ? "bg-red-100 text-red-800"
+                              : order.status === "processing"
+                              ? "bg-blue-100 text-blue-800"
+                              : order.status === "shipped"
+                              ? "bg-purple-100 text-purple-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {order.status.charAt(0).toUpperCase() +
+                            order.status.slice(1)}
                         </div>
                       </TableCell>
-                      <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell>${Number(order.amount).toFixed(2)}</TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleOpenDialog(order, true)}
                         >
                           <Eye className="h-4 w-4" />
                           <span className="sr-only">View</span>
                         </Button>
-                        <Button 
-                          variant="ghost" 
+                        {/* <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleOpenDialog(order, false)}
                         >
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
+                        </Button> */}
+                        <Button
+                          variant="ghost"
                           size="icon"
-                          onClick={() => handleDeleteOrder(order.id)}
+                          onClick={() => handleDeleteOrder(order.order_id)}
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Delete</span>
@@ -236,41 +260,65 @@ const OrdersPage = () => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{isViewMode ? "Order Details" : "Update Order Status"}</DialogTitle>
+            <DialogTitle>
+              {isViewMode ? "Order Details" : "Update Order Status"}
+            </DialogTitle>
             <DialogDescription>
-              {isViewMode 
-                ? "View the details for this order" 
+              {isViewMode
+                ? "View the details for this order"
                 : "Update the status of this order"}
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedOrder && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm text-muted-foreground">Order ID</Label>
-                  <p className="font-medium">{selectedOrder.id}</p>
+                  <Label className="text-sm text-muted-foreground">
+                    Order ID
+                  </Label>
+                  <p className="font-medium">{selectedOrder.order_id}</p>
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">Date</Label>
                   <p className="font-medium">
-                    {new Date(selectedOrder.createdAt).toLocaleDateString()}
+                    {new Date(selectedOrder.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm text-muted-foreground">Total Amount</Label>
-                  <p className="font-medium">${selectedOrder.totalAmount.toFixed(2)}</p>
+                  <Label className="text-sm text-muted-foreground">
+                    Total Amount
+                  </Label>
+                  <p className="font-medium">
+                    ${Number(selectedOrder.amount).toFixed(2)}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-sm text-muted-foreground">Buyer ID</Label>
-                  <p className="font-medium">{selectedOrder.buyerId || "N/A"}</p>
+                  <Label className="text-sm text-muted-foreground">
+                    Buyer ID
+                  </Label>
+                  <p className="font-medium">
+                    {selectedOrder.buyer_id || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">
+                    Buyer Email
+                  </Label>
+                  <p className="font-medium">
+                    {selectedOrder.buyer_email || "N/A"}
+                  </p>
                 </div>
               </div>
-              
+
               {isViewMode ? (
                 <div>
-                  <Label className="text-sm text-muted-foreground">Status</Label>
-                  <p className="font-medium capitalize">{selectedOrder.status}</p>
+                  <Label className="text-sm text-muted-foreground">
+                    Status
+                  </Label>
+                  <p className="font-medium capitalize">
+                    {selectedOrder.status}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -280,7 +328,7 @@ const OrdersPage = () => {
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      {statusOptions.map(option => (
+                      {statusOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -289,14 +337,15 @@ const OrdersPage = () => {
                   </Select>
                 </div>
               )}
-              
+
               {selectedOrder.items && selectedOrder.items.length > 0 && (
                 <div>
                   <Label className="text-sm text-muted-foreground">Items</Label>
                   <ul className="mt-2 space-y-2">
                     {selectedOrder.items.map((item, index) => (
                       <li key={index} className="text-sm">
-                        {item.name || item.product_name || "Item"} x {item.quantity} - ${item.price}
+                        {item.name || item.product_name || "Item"} x{" "}
+                        {item.quantity} - ${item.price}
                       </li>
                     ))}
                   </ul>
@@ -304,18 +353,18 @@ const OrdersPage = () => {
               )}
             </div>
           )}
-          
-          <DialogFooter>
+
+          {/* <DialogFooter>
             {!isViewMode && (
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 onClick={handleUpdateOrder}
                 disabled={updateOrderMutation.isPending}
               >
                 {updateOrderMutation.isPending ? "Updating..." : "Update Order"}
               </Button>
             )}
-          </DialogFooter>
+          </DialogFooter> */}
         </DialogContent>
       </Dialog>
     </div>

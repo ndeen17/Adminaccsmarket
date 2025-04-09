@@ -47,6 +47,8 @@ interface DigitalProduct {
   data_format: string;
   important_notice: string;
   files?: File[];
+  on_homepage?: string;
+  created_at?: string;
 }
 
 const categoryOptions = [
@@ -334,6 +336,7 @@ const DigitalProductsPage = () => {
                   <TableHead>Price</TableHead>
                   <TableHead>Format</TableHead>
                   <TableHead>Stock</TableHead>
+                  <TableHead>On homepage</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -356,6 +359,17 @@ const DigitalProductsPage = () => {
                       </TableCell>
                       <TableCell>{product.data_format}</TableCell>
                       <TableCell>{product.stock_quantity || "N/A"}</TableCell>
+                      <TableCell>
+                        {product.on_homepage === "true" ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            True
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            False
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right space-x-2">
                         {/* <Button
                           variant="ghost"

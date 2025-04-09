@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getMetrics, getOrders, getUsers } from "@/services/adminService";
+import { getMetrics, getOrders, getAllUsers } from "@/services/adminService";
 import { Users, ShoppingCart, DollarSign, TrendingUp } from "lucide-react";
 import {
   LineChart,
@@ -23,11 +23,11 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const [metricsResponse, usersResponse, ordersResponse] =
-          await Promise.all([getMetrics(), getUsers(), getOrders()]);
+          await Promise.all([getMetrics(), getAllUsers(), getOrders()]);
 
         setMetrics(metricsResponse.metrics);
-        setUsers(usersResponse.users);
-        setOrders(ordersResponse.orders);
+        setUsers(usersResponse);
+        setOrders(ordersResponse);
 
         // Process metrics for chart data
         const salesMetrics = metricsResponse.metrics.filter(
@@ -57,7 +57,10 @@ const Dashboard = () => {
   // Calculate summary metrics
   const totalUsers = users.length;
   const totalOrders = orders.length;
-  const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+  const totalSales = orders.reduce(
+    (sum, order) => sum + Number(order.amount) * Number(order.quantity),
+    0
+  );
   const salesGrowth =
     salesData.length > 1
       ? (
@@ -182,18 +185,20 @@ const Dashboard = () => {
               <div className="space-y-4">
                 {orders.slice(0, 4).map((order) => (
                   <div
-                    key={order.id}
+                    key={order.order_id}
                     className="flex justify-between items-center"
                   >
                     <div>
-                      <p className="text-sm font-medium">Order #{order.id}</p>
+                      <p className="text-sm font-medium">
+                        Order #{order.order_id}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(order.createdAt).toLocaleDateString()}
+                        {new Date(order.created_at).toLocaleDateString()}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium">
-                        ${order.totalAmount.toFixed(2)}
+                        ${Number(order.amount).toFixed(2)}
                       </p>
                       <p
                         className={`text-xs ${
@@ -202,7 +207,7 @@ const Dashboard = () => {
                             : "text-amber-500"
                         }`}
                       >
-                        {order.status}
+                        {order.payment_status}
                       </p>
                     </div>
                   </div>

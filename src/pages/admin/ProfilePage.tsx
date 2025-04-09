@@ -20,25 +20,24 @@ const ProfilePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    username: "",
     email: "",
-    phone: "",
-    address: "",
+    role: "",
   });
 
   const navigate = useNavigate();
   const { admin } = useAuth();
 
   useEffect(() => {
+    console.log(admin);
     const fetchProfile = async () => {
       try {
-        const response = await getAdminProfile(admin?.id);
-        setProfile(response.admin);
+        // const response = await getAdminProfile(admin?.admin_id);
+        setProfile(admin);
         setFormData({
-          name: response.admin.name || "",
-          email: response.admin.email || "",
-          phone: response.admin.phone || "",
-          address: response.admin.address || "",
+          username: admin.username || "",
+          email: admin.email || "",
+          role: admin.role || "",
         });
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -118,7 +117,9 @@ const ProfilePage = () => {
               <User className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Name</p>
-                <p className="text-sm text-muted-foreground">{profile.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {profile.username}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -129,6 +130,15 @@ const ProfilePage = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <User className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Admin role</p>
+                <p className="text-sm text-muted-foreground">
+                  {profile.role || "Not provided"}
+                </p>
+              </div>
+            </div>
+            {/* <div className="flex items-center gap-3">
               <Phone className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Phone</p>
@@ -145,14 +155,14 @@ const ProfilePage = () => {
                   {profile.address || "Not provided"}
                 </p>
               </div>
-            </div>
+            </div> */}
             <div className="flex items-center gap-3">
               <Calendar className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Joined</p>
                 <p className="text-sm text-muted-foreground">
-                  {profile.createdAt
-                    ? new Date(profile.createdAt).toLocaleDateString()
+                  {profile.created_at
+                    ? new Date(profile.created_at).toLocaleDateString()
                     : "Not available"}
                 </p>
               </div>
@@ -179,7 +189,7 @@ const ProfilePage = () => {
                   <Input
                     id="name"
                     name="name"
-                    value={formData.name}
+                    value={formData.username}
                     onChange={handleInputChange}
                     placeholder="Enter your full name"
                   />
@@ -195,7 +205,7 @@ const ProfilePage = () => {
                     placeholder="Enter your email"
                   />
                 </div>
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
                   <Input
                     id="phone"
@@ -214,7 +224,7 @@ const ProfilePage = () => {
                     onChange={handleInputChange}
                     placeholder="Enter your address"
                   />
-                </div>
+                </div> */}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Saving Changes..." : "Save Changes"}
                 </Button>
@@ -222,11 +232,11 @@ const ProfilePage = () => {
             ) : (
               <div className="prose max-w-none dark:prose-invert">
                 <p>
-                  Hello, {profile.name || admin?.name || "Admin"}. You are
+                  Hello, {profile.name || admin?.username || "Admin"}. You are
                   logged in as an administrator with access to manage the entire
                   platform. Your account was created on{" "}
-                  {profile.createdAt
-                    ? new Date(profile.createdAt).toLocaleDateString()
+                  {profile.created_at
+                    ? new Date(profile.created_at).toLocaleDateString()
                     : "N/A"}
                   .
                 </p>

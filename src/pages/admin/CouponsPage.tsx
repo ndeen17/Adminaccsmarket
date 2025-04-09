@@ -1,31 +1,23 @@
-
-import { useState } from "react";
-import { 
-  getCoupons, 
-  createCoupon, 
-  updateCouponValue, 
+import { useEffect, useState } from "react";
+import {
+  getCoupons,
+  createCoupon,
+  updateCouponValue,
   updateCouponUsed,
-  deleteCoupon
+  deleteCoupon,
 } from "@/services/couponsService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Tag,
-  Check
-} from "lucide-react";
+import { Search, Plus, Edit, Trash2, Tag, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -49,13 +41,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 interface Coupon {
   id?: string;
   code: string;
-  discount_type: 'percentage' | 'fixed';
+  discount_type: "percentage" | "fixed";
   discount_value: number;
   max_uses: number;
-  used: number;
-  start_date: string;
-  end_date: string;
+  is_used: number;
   active: boolean;
+  date_to_start?: string;
+  date_to_expire?: string;
+  date_created?: string;
 }
 
 const CouponsPage = () => {
@@ -66,83 +59,109 @@ const CouponsPage = () => {
     code: "",
     discount_type: "percentage",
     discount_value: 10,
-    max_uses: 100,
-    used: 0,
-    start_date: new Date().toISOString().split('T')[0],
-    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    active: true
+    max_uses: 1,
+    is_used: 0,
+    date_to_start: new Date().toISOString().split("T")[0],
+    date_to_expire: "",
+    active: true,
   });
-  
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['coupons'],
-    queryFn: getCoupons,
-  });
+  // const { data, isLoading } = useQuery({
+  //   queryKey: ["coupons"],
+  //   queryFn: getCoupons,
+  // });
+
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        const couponsResponse = await getCoupons();
+        // console.log(couponsResponse);
+        setCoupons(couponsResponse);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
+
+    fetchCoupons();
+  }, []);
 
   const createCouponMutation = useMutation({
     mutationFn: (couponData: Coupon) => createCoupon(couponData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['coupons'] });
-      toast.success("Coupon created successfully");
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["coupons"] });
+
+      // Show the response message from the server
+      toast.success(data.message || "Coupon created successfully");
+
       setIsDialogOpen(false);
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to create coupon");
-    }
+      // Show the error message from the server or a fallback message
+      toast.error(error.response?.data?.message || "Failed to create coupon");
+    },
   });
 
   const updateCouponMutation = useMutation({
-    mutationFn: (couponData: Coupon) => updateCouponValue(couponData.id!, { 
-      discount_type: couponData.discount_type,
-      discount_value: couponData.discount_value,
-      max_uses: couponData.max_uses,
-      start_date: couponData.start_date,
-      end_date: couponData.end_date,
-      active: couponData.active
-    }),
+    mutationFn: (couponData: Coupon) =>
+      updateCouponValue(couponData.id!, {
+        discount_type: couponData.discount_type,
+        discount_value: couponData.discount_value,
+        max_uses: couponData.max_uses,
+        date_to_start: couponData.date_to_start,
+        date_to_expire: couponData.date_to_expire,
+        active: couponData.active,
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['coupons'] });
+      queryClient.invalidateQueries({ queryKey: ["coupons"] });
       toast.success("Coupon updated successfully");
       setIsDialogOpen(false);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update coupon");
-    }
+    },
   });
 
   const updateCouponUsedMutation = useMutation({
     mutationFn: (couponId: string) => updateCouponUsed(couponId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['coupons'] });
+      queryClient.invalidateQueries({ queryKey: ["coupons"] });
       toast.success("Coupon usage updated");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update coupon usage");
-    }
+    },
   });
 
   const deleteCouponMutation = useMutation({
     mutationFn: (couponId: string) => deleteCoupon(couponId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['coupons'] });
+      queryClient.invalidateQueries({ queryKey: ["coupons"] });
       toast.success("Coupon deleted successfully");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete coupon");
-    }
+    },
   });
 
-  const filteredCoupons = data?.coupons?.filter((coupon: Coupon) => 
-    coupon.code.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  const filteredCoupons =
+    coupons?.filter((coupon: Coupon) =>
+      coupon.code.toLowerCase().includes(searchQuery.toLowerCase())
+    ) || [];
 
   const handleOpenDialog = (coupon?: Coupon) => {
     if (coupon) {
       setCurrentCoupon({
         ...coupon,
-        start_date: new Date(coupon.start_date).toISOString().split('T')[0],
-        end_date: new Date(coupon.end_date).toISOString().split('T')[0]
+        date_to_start: new Date(coupon.date_to_start)
+          .toISOString()
+          .split("T")[0],
+        date_to_expire: new Date(coupon.date_to_expire)
+          .toISOString()
+          .split("T")[0],
       });
       setIsEditing(true);
     } else {
@@ -150,11 +169,13 @@ const CouponsPage = () => {
         code: "",
         discount_type: "percentage",
         discount_value: 10,
-        max_uses: 100,
-        used: 0,
-        start_date: new Date().toISOString().split('T')[0],
-        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        active: true
+        max_uses: 1,
+        is_used: 0,
+        date_to_start: new Date().toISOString().split("T")[0],
+        date_to_expire: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+        active: true,
       });
       setIsEditing(false);
     }
@@ -165,8 +186,8 @@ const CouponsPage = () => {
     const { name, value, type } = e.target;
     let parsedValue: string | number | boolean = value;
 
-    if (type === 'number') {
-      parsedValue = value === '' ? 0 : parseFloat(value);
+    if (type === "number") {
+      parsedValue = value === "" ? 0 : parseFloat(value);
     }
 
     setCurrentCoupon({
@@ -175,23 +196,23 @@ const CouponsPage = () => {
     });
   };
 
-  const handleSwitchChange = (checked: boolean) => {
-    setCurrentCoupon({
-      ...currentCoupon,
-      active: checked,
-    });
-  };
+  // const handleSwitchChange = (checked: boolean) => {
+  //   setCurrentCoupon({
+  //     ...currentCoupon,
+  //     active: checked,
+  //   });
+  // };
 
-  const handleSelectChange = (value: 'percentage' | 'fixed') => {
-    setCurrentCoupon({
-      ...currentCoupon,
-      discount_type: value,
-    });
-  };
+  // const handleSelectChange = (value: "percentage" | "fixed") => {
+  //   setCurrentCoupon({
+  //     ...currentCoupon,
+  //     discount_type:"Percentage",
+  //   });
+  // };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (isEditing && currentCoupon.id) {
       updateCouponMutation.mutate(currentCoupon);
     } else {
@@ -204,13 +225,17 @@ const CouponsPage = () => {
   };
 
   const handleDeleteCoupon = (couponId: string) => {
-    if (window.confirm("Are you sure you want to delete this coupon? This action cannot be undone.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this coupon? This action cannot be undone."
+      )
+    ) {
       deleteCouponMutation.mutate(couponId);
     }
   };
 
-  const isMutating = createCouponMutation.isPending || 
-                     updateCouponMutation.isPending;
+  const isMutating =
+    createCouponMutation.isPending || updateCouponMutation.isPending;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -254,7 +279,7 @@ const CouponsPage = () => {
                 <TableRow>
                   <TableHead>Code</TableHead>
                   <TableHead>Discount</TableHead>
-                  <TableHead>Used / Max</TableHead>
+                  {/* <TableHead>Used / Max</TableHead> */}
                   <TableHead>Valid Period</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -270,18 +295,22 @@ const CouponsPage = () => {
                 ) : (
                   filteredCoupons.map((coupon: Coupon) => (
                     <TableRow key={coupon.id}>
-                      <TableCell className="font-medium">{coupon.code}</TableCell>
-                      <TableCell>
-                        {coupon.discount_type === 'percentage' 
-                          ? `${coupon.discount_value}%` 
-                          : `$${coupon.discount_value.toFixed(2)}`}
+                      <TableCell className="font-medium">
+                        {coupon.code}
                       </TableCell>
-                      <TableCell>{coupon.used} / {coupon.max_uses}</TableCell>
+                      <TableCell>{Number(coupon.discount_value)}%</TableCell>
+                      {/* <TableCell>
+                        {coupon.discount_type === "percentage"
+                          ? `${Number(coupon.discount_value)}%`
+                          : `$${Number(coupon.discount_value).toFixed(2)}`}
+                      </TableCell> */}
+                      {/* <TableCell>{coupon.used} / {coupon.max_uses}</TableCell> */}
                       <TableCell>
-                        {new Date(coupon.start_date).toLocaleDateString()} - {new Date(coupon.end_date).toLocaleDateString()}
+                        {new Date(coupon.date_created).toLocaleDateString()} -{" "}
+                        {new Date(coupon.date_to_expire).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        {coupon.active ? (
+                        {Number(coupon.is_used) === 0 ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             Active
                           </span>
@@ -292,25 +321,25 @@ const CouponsPage = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button 
-                          variant="ghost" 
+                        {/* <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleIncrementUsage(coupon.id!)}
                           title="Increment usage count"
                         >
                           <Check className="h-4 w-4" />
                           <span className="sr-only">Increment Usage</span>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
+                        </Button> */}
+                        {/* <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleOpenDialog(coupon)}
                         >
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
+                        </Button> */}
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleDeleteCoupon(coupon.id!)}
                         >
@@ -330,10 +359,12 @@ const CouponsPage = () => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isEditing ? "Edit Coupon" : "Create New Coupon"}</DialogTitle>
+            <DialogTitle>
+              {isEditing ? "Edit Coupon" : "Create New Coupon"}
+            </DialogTitle>
             <DialogDescription>
-              {isEditing 
-                ? "Update the coupon details below" 
+              {isEditing
+                ? "Update the coupon details below"
                 : "Fill in the details to create a new coupon"}
             </DialogDescription>
           </DialogHeader>
@@ -358,18 +389,7 @@ const CouponsPage = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="discount_type">Discount Type</Label>
-                  <Select 
-                    value={currentCoupon.discount_type}
-                    onValueChange={handleSelectChange}
-                  >
-                    <SelectTrigger id="discount_type">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percentage">Percentage (%)</SelectItem>
-                      <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input value={"Percentage"} disabled={true} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="discount_value">Discount Value</Label>
@@ -377,9 +397,17 @@ const CouponsPage = () => {
                     id="discount_value"
                     name="discount_value"
                     type="number"
-                    step={currentCoupon.discount_type === 'percentage' ? "1" : "0.01"}
+                    step={
+                      currentCoupon.discount_type === "percentage"
+                        ? "1"
+                        : "0.01"
+                    }
                     min="0"
-                    max={currentCoupon.discount_type === 'percentage' ? "100" : undefined}
+                    max={
+                      currentCoupon.discount_type === "percentage"
+                        ? "100"
+                        : undefined
+                    }
                     value={currentCoupon.discount_value}
                     onChange={handleInputChange}
                     required
@@ -387,7 +415,7 @@ const CouponsPage = () => {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="max_uses">Maximum Uses</Label>
                   <Input
                     id="max_uses"
@@ -398,59 +426,65 @@ const CouponsPage = () => {
                     onChange={handleInputChange}
                     required
                   />
-                </div>
-                {isEditing && (
-                  <div className="space-y-2">
-                    <Label htmlFor="used">Used Count</Label>
-                    <Input
-                      id="used"
-                      name="used"
-                      type="number"
-                      min="0"
-                      max={currentCoupon.max_uses}
-                      value={currentCoupon.used}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                )}
+                </div> */}
+                {
+                  // isEditing && (
+                  // <div className="space-y-2">
+                  //   <Label htmlFor="used">Used Count</Label>
+                  //   <Input
+                  //     id="used"
+                  //     name="used"
+                  //     type="number"
+                  //     min="0"
+                  //     max={currentCoupon.max_uses}
+                  //     value={currentCoupon.used}
+                  //     onChange={handleInputChange}
+                  //     required
+                  //   />
+                  // </div>
+                  // )
+                }
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="start_date">Start Date</Label>
+                  <Label htmlFor="date_to_start">Start Date</Label>
                   <Input
-                    id="start_date"
-                    name="start_date"
+                    id="date_to_start"
+                    name="date_to_start"
                     type="date"
-                    value={currentCoupon.start_date}
+                    value={currentCoupon.date_to_start}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="end_date">End Date</Label>
+                  <Label htmlFor="date_to_expire">End Date</Label>
                   <Input
-                    id="end_date"
-                    name="end_date"
+                    id="date_to_expire"
+                    name="date_to_expire"
                     type="date"
-                    value={currentCoupon.end_date}
+                    value={currentCoupon.date_to_expire}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              {/* <div className="flex items-center space-x-2">
                 <Switch
                   id="active"
                   checked={currentCoupon.active}
                   onCheckedChange={handleSwitchChange}
                 />
                 <Label htmlFor="active">Active</Label>
-              </div>
+              </div> */}
             </div>
             <DialogFooter>
               <Button type="submit" disabled={isMutating}>
-                {isMutating ? "Processing..." : isEditing ? "Update Coupon" : "Create Coupon"}
+                {isMutating
+                  ? "Processing..."
+                  : isEditing
+                  ? "Update Coupon"
+                  : "Create Coupon"}
               </Button>
             </DialogFooter>
           </form>

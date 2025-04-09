@@ -50,7 +50,7 @@ const OrdersPage: React.FC = () => {
       const data = await getOrders();
       console.log(data);
       console.log("object");
-      // setOrders(data || []);
+      setOrders(data || []);
     } catch (error) {
       toast({
         variant: "destructive",
