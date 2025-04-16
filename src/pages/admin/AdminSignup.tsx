@@ -28,7 +28,14 @@ const AdminSignup = () => {
     setIsLoading(true);
 
     try {
-      const { admin } = await adminSignup({ email, password });
+      // Modified to provide all required fields for SignupData
+      const { admin } = await adminSignup({ 
+        email, 
+        password, 
+        name: email.split('@')[0], // Generate a name from email
+        code: "" // Empty code as it might be auto-generated or not required for admin
+      });
+      
       login(admin as any); // Type assertion as Admin
       navigate("/admin/dashboard");
     } catch (error) {

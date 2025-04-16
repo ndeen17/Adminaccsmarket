@@ -2,6 +2,7 @@
 import { ProductData } from "../types/admin";
 import { delay } from "./utils/apiUtils";
 import { mockProducts } from "./mockData";
+import env from "@/config/env";
 
 // Homepage Products Management
 export const getFeaturedProducts = async () => {
@@ -50,4 +51,12 @@ export const removeProductFromHomepage = async (id: string) => {
   // Instead of deleting, just mark as not featured
   mockProducts[productIndex].featured = false;
   return { success: true };
+};
+
+export const ProductService = {
+  getFeaturedProducts,
+  getAllProducts,
+  postProductToHomepage,
+  updateProductOnHomepage,
+  removeProductFromHomepage
 };

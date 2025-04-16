@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { authService } from '../../services/authService';
-import { useToast } from '../ui/use-toast';
+import { useToast } from '../../hooks/use-toast';
 import { useAuth } from '../../contexts/AuthContext';
 
 const ChangePassword: React.FC = () => {
-  const { user } = useAuth();
+  const { admin } = useAuth(); // Changed from user to admin
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -19,11 +20,17 @@ const ChangePassword: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const email = user?.email || ''; // Assuming `user` is available in context
-      await authService.changePassword({ email, oldPassword: currentPassword, newPassword });
+      const email = admin?.email || ''; // Changed from user to admin
+      await authService.changePassword({ 
+        email, 
+        oldPassword: currentPassword, 
+        newPassword 
+      });
+      
       toast({ title: 'Success', description: 'Password changed successfully', variant: 'default' });
     } catch (error) {
-      toast({ title: 'Error', description: error.message || 'Failed to change password', variant: 'destructive' });
+      const errorMsg = error instanceof Error ? error.message : 'Failed to change password';
+      toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }

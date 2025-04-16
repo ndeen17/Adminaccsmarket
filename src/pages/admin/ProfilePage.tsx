@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/lib/toast";
 import { getAdminProfile } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
-import { User, Mail, Phone, MapPin, Calendar } from "lucide-react";
+import { User, Mail, Calendar } from "lucide-react";
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState<any>({});
@@ -26,19 +27,25 @@ const ProfilePage = () => {
   });
 
   const navigate = useNavigate();
-  const { admin } = useAuth();
+  const { admin, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    console.log(admin);
+    console.log("Admin in ProfilePage:", admin);
     const fetchProfile = async () => {
       try {
-        // const response = await getAdminProfile(admin?.admin_id);
-        setProfile(admin);
-        setFormData({
-          username: admin.username || "",
-          email: admin.email || "",
-          role: admin.role || "",
-        });
+        // Set profile directly from admin context to avoid additional API call
+        if (admin) {
+          setProfile(admin);
+          setFormData({
+            username: admin.username || "",
+            email: admin.email || "",
+            role: admin.role || "",
+          });
+        } else {
+          // If admin is null, redirect to login
+          navigate("/admin/login");
+          return;
+        }
       } catch (error) {
         console.error("Error fetching profile:", error);
       } finally {
@@ -46,8 +53,12 @@ const ProfilePage = () => {
       }
     };
 
-    fetchProfile();
-  }, []);
+    if (!isAuthenticated) {
+      navigate("/admin/login");
+    } else {
+      fetchProfile();
+    }
+  }, [admin, isAuthenticated, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -58,21 +69,13 @@ const ProfilePage = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    // e.preventDefault();
-    // setIsLoading(true);
-    // try {
-    //   // const response = await updateAdminProfile(formData);
-    //   // setProfile(response.admin);
-    //   // toast.success("Profile updated successfully");
-    //   setIsEditing(false);
-    // } catch (error) {
-    //   console.error("Error updating profile:", error);
-    // } finally {
-    //   setIsLoading(false);
-    // }
+    // Implementation for profile update can be added here
+    e.preventDefault();
+    toast.info("Profile update functionality will be implemented soon");
+    setIsEditing(false);
   };
 
-  if (isLoading && !profile.id) {
+  if (isLoading || !admin) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -118,7 +121,7 @@ const ProfilePage = () => {
               <div>
                 <p className="text-sm font-medium">Name</p>
                 <p className="text-sm text-muted-foreground">
-                  {profile.username}
+                  {profile.username || "Not provided"}
                 </p>
               </div>
             </div>
@@ -126,7 +129,7 @@ const ProfilePage = () => {
               <Mail className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Email</p>
-                <p className="text-sm text-muted-foreground">{profile.email}</p>
+                <p className="text-sm text-muted-foreground">{profile.email || "Not provided"}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -138,24 +141,6 @@ const ProfilePage = () => {
                 </p>
               </div>
             </div>
-            {/* <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Phone</p>
-                <p className="text-sm text-muted-foreground">
-                  {profile.phone || "Not provided"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Address</p>
-                <p className="text-sm text-muted-foreground">
-                  {profile.address || "Not provided"}
-                </p>
-              </div>
-            </div> */}
             <div className="flex items-center gap-3">
               <Calendar className="h-5 w-5 text-muted-foreground" />
               <div>
@@ -185,13 +170,13 @@ const ProfilePage = () => {
             {isEditing ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input
-                    id="name"
-                    name="name"
+                    id="username"
+                    name="username"
                     value={formData.username}
                     onChange={handleInputChange}
-                    placeholder="Enter your full name"
+                    placeholder="Enter your username"
                   />
                 </div>
                 <div className="space-y-2">
@@ -205,26 +190,6 @@ const ProfilePage = () => {
                     placeholder="Enter your email"
                   />
                 </div>
-                {/* <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="Enter your phone number"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="Enter your address"
-                  />
-                </div> */}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Saving Changes..." : "Save Changes"}
                 </Button>
@@ -232,7 +197,7 @@ const ProfilePage = () => {
             ) : (
               <div className="prose max-w-none dark:prose-invert">
                 <p>
-                  Hello, {profile.name || admin?.username || "Admin"}. You are
+                  Hello, {profile.username || "Admin"}. You are
                   logged in as an administrator with access to manage the entire
                   platform. Your account was created on{" "}
                   {profile.created_at

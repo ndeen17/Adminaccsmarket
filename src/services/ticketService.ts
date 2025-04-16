@@ -1,91 +1,50 @@
 
-import { TicketData } from "../types/admin";
 import { delay } from "./utils/apiUtils";
-import { mockTickets } from "./mockData";
 
-// Ticket Management
-export const getTickets = async () => {
-  await delay(800);
-  return { tickets: mockTickets };
-};
+interface CreateTicketData {
+  subject: string;
+  message: string;
+  category: string;
+  user_id: string;
+}
 
-export const getTicketById = async (id: string) => {
-  await delay(800);
-  const ticket = mockTickets.find(ticket => ticket.id === id);
-  
-  if (!ticket) {
-    throw new Error("Ticket not found");
-  }
-  
-  return { ticket };
-};
-
-export const createTicket = async (ticketData: Omit<TicketData, 'id' | 'createdAt' | 'lastUpdated'>) => {
+export const createTicket = async (ticketData: CreateTicketData) => {
   await delay(1000);
-  const newTicket: TicketData = {
-    ...ticketData,
-    id: (mockTickets.length + 1).toString(),
-    createdAt: new Date().toISOString().split('T')[0],
-    lastUpdated: new Date().toISOString().split('T')[0]
+  
+  // In a real app, this would call an API to create the ticket
+  return { 
+    ticketId: Math.random().toString(36).substring(2, 15),
+    messageId: Math.random().toString(36).substring(2, 15)
   };
-  
-  mockTickets.push(newTicket);
-  return { ticket: newTicket };
 };
 
-export const updateTicket = async (id: string, ticketData: Partial<TicketData>) => {
-  await delay(1000);
-  const ticketIndex = mockTickets.findIndex(ticket => ticket.id === id);
+export const getUserTickets = async (userId: string) => {
+  await delay(800);
   
-  if (ticketIndex === -1) {
-    throw new Error("Ticket not found");
-  }
-  
-  mockTickets[ticketIndex] = { 
-    ...mockTickets[ticketIndex], 
-    ...ticketData,
-    lastUpdated: new Date().toISOString().split('T')[0]
-  };
-  
-  return { ticket: mockTickets[ticketIndex] };
+  // In a real app, this would fetch the user's tickets from an API
+  return [
+    {
+      id: "ticket-1",
+      subject: "Account Issue",
+      status: "open",
+      category: "account",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      unreadCount: 2
+    },
+    {
+      id: "ticket-2",
+      subject: "Payment Problem",
+      status: "closed",
+      category: "billing",
+      createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+      updatedAt: new Date(Date.now() - 43200000).toISOString(), // 12 hours ago
+      unreadCount: 0
+    }
+  ];
 };
 
-export const deleteTicket = async (id: string) => {
-  await delay(1000);
-  const ticketIndex = mockTickets.findIndex(ticket => ticket.id === id);
-  
-  if (ticketIndex === -1) {
-    throw new Error("Ticket not found");
-  }
-  
-  mockTickets.splice(ticketIndex, 1);
-  return { success: true };
-};
-
-export const assignTicket = async (ticketId: string, adminId: string) => {
-  await delay(1000);
-  const ticketIndex = mockTickets.findIndex(ticket => ticket.id === ticketId);
-  
-  if (ticketIndex === -1) {
-    throw new Error("Ticket not found");
-  }
-  
-  mockTickets[ticketIndex].assignedTo = adminId;
-  mockTickets[ticketIndex].lastUpdated = new Date().toISOString().split('T')[0];
-  
-  return { ticket: mockTickets[ticketIndex] };
-};
-
-export const closeTicket = async (id: string) => {
-  await delay(1000);
-  const ticketIndex = mockTickets.findIndex(ticket => ticket.id === id);
-  
-  if (ticketIndex === -1) {
-    throw new Error("Ticket not found");
-  }
-  
-  mockTickets[ticketIndex].status = "closed";
-  mockTickets[ticketIndex].lastUpdated = new Date().toISOString().split('T')[0];
-  
-  return { ticket: mockTickets[ticketIndex] };
+export const ticketService = {
+  createTicket,
+  getUserTickets
 };

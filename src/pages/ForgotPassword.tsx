@@ -11,9 +11,10 @@ import * as authService from "@/services/authService";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [step, setStep] = useState(1); // 1: Email, 2: Verification Code
+  const [stage, setStage] = useState("email"); // 1: Email, 2: Verification Code
   const [verificationCode, setVerificationCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -22,11 +23,11 @@ const ForgotPassword = () => {
     try {
       await authService.forgotPassword({ email, resetCode: "" });
       toast({
-        title: "Error",
-        description: "Verification code sent to your email.",
-        variant: "destructive",
+        title: "Email Sent",
+        description: "Password reset instructions have been sent to your email",
+        variant: "default",
       });
-      setStep(2);
+      setStage("confirmation");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -59,10 +60,10 @@ const ForgotPassword = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-    if (step === 1) {
+    if (stage === "email") {
       if (!email) {
         toast({
           title: "Error",
@@ -98,14 +99,14 @@ const ForgotPassword = () => {
             Forgot Your Password?
           </h1>
           <p className="text-sm text-muted-foreground">
-            {step === 1
+            {stage === "email"
               ? "Enter your email address to receive a verification code"
               : "Enter the verification code sent to your email"}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          {step === 1 ? (
+          {stage === "email" ? (
             <div className="space-y-2">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -133,10 +134,10 @@ const ForgotPassword = () => {
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || isSubmitting}>
             {isLoading
               ? "Processing..."
-              : step === 1
+              : stage === "email"
               ? "Send Reset Link"
               : "Verify Code"}
           </Button>

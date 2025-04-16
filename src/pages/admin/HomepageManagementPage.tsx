@@ -1,463 +1,431 @@
-
-import { useState } from "react";
-import { 
-  getFeaturedProducts, 
-  postProductToHomepage, 
-  updateProductOnHomepage, 
-  removeProductFromHomepage 
-} from "@/services/homepageService";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  LayoutDashboard,
-  MoveUp,
-  MoveDown,
-  Eye
-} from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { toast } from "@/lib/toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProductService } from "@/services/productService";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowUpDown, Check, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 
-interface HomepageProduct {
-  id?: string;
+export type HomepageProduct = {
+  id: string;
   name: string;
   description: string;
-  price: number;
-  imageUrl?: string;
+  imageUrl: string;
+  price: string;
   featured: boolean;
-  displayOrder?: number;
-}
+  position: number;
+};
 
 const HomepageManagementPage = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState<HomepageProduct>({
-    name: "",
-    description: "",
-    price: 0,
-    imageUrl: "",
-    featured: true,
-    displayOrder: 0
+  const [products, setProducts] = useState<HomepageProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editingProduct, setEditingProduct] = useState<HomepageProduct | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [heroContent, setHeroContent] = useState({
+    title: "Welcome to our Digital Products Store",
+    subtitle: "Find the best digital products for your needs",
+    buttonText: "Shop Now",
+    imageUrl: "/hero-image.jpg"
   });
+  const [announcements, setAnnouncements] = useState([
+    { id: "1", text: "New products added weekly!", active: true },
+    { id: "2", text: "Summer sale: 20% off all products", active: true },
+    { id: "3", text: "Free support for all purchases", active: false }
+  ]);
   
-  const queryClient = useQueryClient();
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['featuredProducts'],
-    queryFn: getFeaturedProducts,
-  });
-
-  const addProductMutation = useMutation({
-    mutationFn: (productData: HomepageProduct) => postProductToHomepage(productData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['featuredProducts'] });
-      toast.success("Product added to homepage successfully");
-      setIsDialogOpen(false);
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to add product to homepage");
-    }
-  });
-
-  const updateProductMutation = useMutation({
-    mutationFn: (productData: HomepageProduct) => updateProductOnHomepage(productData.id!, productData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['featuredProducts'] });
-      toast.success("Homepage product updated successfully");
-      setIsDialogOpen(false);
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update homepage product");
-    }
-  });
-
-  const removeProductMutation = useMutation({
-    mutationFn: (productId: string) => removeProductFromHomepage(productId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['featuredProducts'] });
-      toast.success("Product removed from homepage successfully");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to remove product from homepage");
-    }
-  });
-
-  const featuredProducts = data?.products || [];
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        const response = await ProductService.getFeaturedProducts();
+        
+        // Transform to HomepageProduct type and add position
+        const featuredProducts = response.products.map((product, index) => ({
+          ...product,
+          position: index + 1,
+          imageUrl: product.imageUrl || "/placeholder.svg"
+        })) as HomepageProduct[];
+        
+        setProducts(featuredProducts);
+      } catch (error) {
+        console.error("Failed to fetch featured products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, []);
   
-  const filteredProducts = featuredProducts.filter((product: HomepageProduct) => 
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Sort by display order if it exists
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
-      return a.displayOrder - b.displayOrder;
-    }
-    return 0;
-  });
-
-  const handleOpenDialog = (product?: HomepageProduct) => {
-    if (product) {
-      setCurrentProduct(product);
-      setIsEditing(true);
-    } else {
-      setCurrentProduct({
-        name: "",
-        description: "",
-        price: 0,
-        imageUrl: "",
-        featured: true,
-        displayOrder: featuredProducts.length
-      });
-      setIsEditing(false);
-    }
-    setIsDialogOpen(true);
-  };
-
-  const handleOpenPreview = (product: HomepageProduct) => {
-    setCurrentProduct(product);
-    setIsPreviewOpen(true);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setCurrentProduct({
-      ...currentProduct,
-      [name]: name === "price" ? parseFloat(value) : value,
+  const handleAddProduct = () => {
+    setEditingProduct({
+      id: "",
+      name: "",
+      description: "",
+      imageUrl: "",
+      price: "",
+      featured: true,
+      position: products.length + 1
     });
+    setIsModalOpen(true);
   };
-
-  const handleSwitchChange = (checked: boolean) => {
-    setCurrentProduct({
-      ...currentProduct,
-      featured: checked,
+  
+  const handleEditProduct = (product: HomepageProduct) => {
+    setEditingProduct(product);
+    setIsModalOpen(true);
+  };
+  
+  const handleSaveProduct = async () => {
+    if (!editingProduct) return;
+    
+    setIsSaving(true);
+    try {
+      if (editingProduct.id) {
+        // Update existing product
+        await ProductService.updateProductOnHomepage(editingProduct.id, editingProduct);
+        setProducts(products.map(p => p.id === editingProduct.id ? editingProduct : p));
+      } else {
+        // Add new product
+        const response = await ProductService.postProductToHomepage(editingProduct);
+        setProducts([...products, { ...response.product, position: products.length + 1 } as HomepageProduct]);
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Failed to save product:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  const handleRemoveProduct = async (id: string) => {
+    try {
+      await ProductService.removeProductFromHomepage(id);
+      setProducts(products.filter(p => p.id !== id));
+    } catch (error) {
+      console.error("Failed to remove product:", error);
+    }
+  };
+  
+  const handleMoveProduct = (id: string, direction: 'up' | 'down') => {
+    const currentIndex = products.findIndex(p => p.id === id);
+    if (
+      (direction === 'up' && currentIndex === 0) || 
+      (direction === 'down' && currentIndex === products.length - 1)
+    ) {
+      return;
+    }
+    
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const newProducts = [...products];
+    
+    // Swap positions
+    [newProducts[currentIndex], newProducts[newIndex]] = [newProducts[newIndex], newProducts[currentIndex]];
+    
+    // Update position numbers
+    newProducts.forEach((product, index) => {
+      product.position = index + 1;
     });
+    
+    setProducts(newProducts);
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (isEditing && currentProduct.id) {
-      updateProductMutation.mutate(currentProduct);
-    } else {
-      addProductMutation.mutate(currentProduct);
-    }
+  
+  const handleSaveHero = () => {
+    // In a real app, this would save to an API
+    console.log("Saving hero content:", heroContent);
+    // Show success message
   };
-
-  const handleMoveProduct = (product: HomepageProduct, direction: 'up' | 'down') => {
-    if (!product.displayOrder !== undefined) return;
-    
-    let newOrder = product.displayOrder!;
-    
-    if (direction === 'up' && newOrder > 0) {
-      newOrder--;
-    } else if (direction === 'down' && newOrder < featuredProducts.length - 1) {
-      newOrder++;
-    } else {
-      return; // Can't move further
-    }
-    
-    // Find any product with the target order and swap
-    const productToSwap = featuredProducts.find(p => p.displayOrder === newOrder);
-    
-    if (productToSwap) {
-      updateProductMutation.mutate({
-        ...productToSwap,
-        displayOrder: product.displayOrder
-      });
-    }
-    
-    updateProductMutation.mutate({
-      ...product,
-      displayOrder: newOrder
-    });
+  
+  const handleToggleAnnouncement = (id: string) => {
+    setAnnouncements(announcements.map(a => 
+      a.id === id ? { ...a, active: !a.active } : a
+    ));
   };
-
-  const handleDeleteProduct = (productId: string) => {
-    if (window.confirm("Are you sure you want to remove this product from the homepage? This action cannot be undone.")) {
-      removeProductMutation.mutate(productId);
-    }
+  
+  const handleSaveAnnouncements = () => {
+    // In a real app, this would save to an API
+    console.log("Saving announcements:", announcements);
+    // Show success message
   };
-
-  const isMutating = addProductMutation.isPending || 
-                     updateProductMutation.isPending || 
-                     removeProductMutation.isPending;
-
+  
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Homepage Management</h1>
-          <p className="text-muted-foreground">
-            Manage featured products on your homepage
-          </p>
-        </div>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product to Homepage
-        </Button>
-      </div>
-
-      <Card className="glass-card">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle>Featured Products</CardTitle>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search products..."
-                className="pl-8 md:w-[240px] lg:w-[320px]"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center h-60">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Featured</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedProducts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10">
-                      No featured products found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  sortedProducts.map((product: HomepageProduct) => (
-                    <TableRow key={product.id}>
-                      <TableCell>{product.displayOrder !== undefined ? product.displayOrder + 1 : "-"}</TableCell>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>${parseFloat(product.price.toString()).toFixed(2)}</TableCell>
-                      <TableCell>
-                        {product.featured ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Featured
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            Hidden
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleOpenPreview(product)}
-                        >
-                          <Eye className="h-4 w-4" />
-                          <span className="sr-only">Preview</span>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleMoveProduct(product, 'up')}
-                          disabled={product.displayOrder === 0}
-                        >
-                          <MoveUp className="h-4 w-4" />
-                          <span className="sr-only">Move Up</span>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleMoveProduct(product, 'down')}
-                          disabled={product.displayOrder === featuredProducts.length - 1}
-                        >
-                          <MoveDown className="h-4 w-4" />
-                          <span className="sr-only">Move Down</span>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleOpenDialog(product)}
-                        >
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleDeleteProduct(product.id!)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Remove</span>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{isEditing ? "Edit Featured Product" : "Add Product to Homepage"}</DialogTitle>
-            <DialogDescription>
-              {isEditing 
-                ? "Update the product details below" 
-                : "Fill in the product details to feature on the homepage"}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Product Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={currentProduct.name}
-                  onChange={handleInputChange}
-                  placeholder="Enter product name"
-                  required
-                />
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Homepage Management</h1>
+      
+      <Tabs defaultValue="featured-products" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="featured-products">Featured Products</TabsTrigger>
+          <TabsTrigger value="hero">Hero Section</TabsTrigger>
+          <TabsTrigger value="announcements">Announcements</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="featured-products">
+          <Card>
+            <CardHeader>
+              <CardTitle>Featured Products</CardTitle>
+              <CardDescription>
+                Manage the products that appear on the homepage.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <Button onClick={handleAddProduct}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Product
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  value={currentProduct.description}
-                  onChange={handleInputChange}
-                  placeholder="Enter product description"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="price">Price</Label>
-                  <Input
-                    id="price"
-                    name="price"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={currentProduct.price}
-                    onChange={handleInputChange}
-                    placeholder="Enter price"
-                    required
+              
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : products.length > 0 ? (
+                <div className="border rounded-md">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="p-2 text-left">Position</th>
+                        <th className="p-2 text-left">Name</th>
+                        <th className="p-2 text-left">Price</th>
+                        <th className="p-2 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map((product) => (
+                        <tr key={product.id} className="border-b">
+                          <td className="p-2">{product.position}</td>
+                          <td className="p-2">{product.name}</td>
+                          <td className="p-2">{product.price}</td>
+                          <td className="p-2 text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleMoveProduct(product.id, 'up')}
+                                disabled={product.position === 1}
+                              >
+                                <ArrowUpDown className="h-4 w-4 rotate-90" />
+                                <span className="sr-only">Move up</span>
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleMoveProduct(product.id, 'down')}
+                                disabled={product.position === products.length}
+                              >
+                                <ArrowUpDown className="h-4 w-4 -rotate-90" />
+                                <span className="sr-only">Move down</span>
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditProduct(product)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                                <span className="sr-only">Edit</span>
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleRemoveProduct(product.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Remove</span>
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No featured products. Click "Add Product" to add one.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="hero">
+          <Card>
+            <CardHeader>
+              <CardTitle>Hero Section</CardTitle>
+              <CardDescription>
+                Configure the main hero section on the homepage.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Title</label>
+                  <Input 
+                    value={heroContent.title} 
+                    onChange={(e) => setHeroContent({...heroContent, title: e.target.value})}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="displayOrder">Display Order</Label>
-                  <Input
-                    id="displayOrder"
-                    name="displayOrder"
-                    type="number"
-                    min="0"
-                    value={currentProduct.displayOrder}
-                    onChange={handleInputChange}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Subtitle</label>
+                  <Input 
+                    value={heroContent.subtitle} 
+                    onChange={(e) => setHeroContent({...heroContent, subtitle: e.target.value})}
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Button Text</label>
+                  <Input 
+                    value={heroContent.buttonText} 
+                    onChange={(e) => setHeroContent({...heroContent, buttonText: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Image URL</label>
+                  <Input 
+                    value={heroContent.imageUrl} 
+                    onChange={(e) => setHeroContent({...heroContent, imageUrl: e.target.value})}
+                  />
+                </div>
+                <div className="pt-4">
+                  <Button onClick={handleSaveHero}>Save Changes</Button>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  name="imageUrl"
-                  value={currentProduct.imageUrl || ""}
-                  onChange={handleInputChange}
-                  placeholder="Enter image URL"
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="announcements">
+          <Card>
+            <CardHeader>
+              <CardTitle>Announcements</CardTitle>
+              <CardDescription>
+                Manage the announcement banners that appear on the homepage.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {announcements.map((announcement) => (
+                  <div key={announcement.id} className="flex items-center gap-4 p-3 border rounded-md">
+                    <div className="flex-1">
+                      <Input 
+                        value={announcement.text} 
+                        onChange={(e) => {
+                          setAnnouncements(announcements.map(a => 
+                            a.id === announcement.id ? { ...a, text: e.target.value } : a
+                          ));
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">Active</span>
+                      <Button 
+                        variant={announcement.active ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleToggleAnnouncement(announcement.id)}
+                      >
+                        {announcement.active && <Check className="h-4 w-4 mr-1" />}
+                        {announcement.active ? "Yes" : "No"}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setAnnouncements(announcements.filter(a => a.id !== announcement.id));
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setAnnouncements([
+                      ...announcements, 
+                      { 
+                        id: Math.random().toString(36).substring(2, 9), 
+                        text: "New announcement", 
+                        active: true 
+                      }
+                    ]);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Announcement
+                </Button>
+                
+                <div className="pt-4">
+                  <Button onClick={handleSaveAnnouncements}>Save Changes</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      {isModalOpen && editingProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">
+              {editingProduct.id ? "Edit Product" : "Add Product"}
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Name</label>
+                <Input 
+                  value={editingProduct.name} 
+                  onChange={(e) => setEditingProduct({...editingProduct, name: e.target.value})}
                 />
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="featured"
-                  checked={currentProduct.featured}
-                  onCheckedChange={handleSwitchChange}
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <Textarea 
+                  value={editingProduct.description} 
+                  onChange={(e) => setEditingProduct({...editingProduct, description: e.target.value})}
+                  rows={3}
                 />
-                <Label htmlFor="featured">Featured on Homepage</Label>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Price</label>
+                <Input 
+                  value={editingProduct.price} 
+                  onChange={(e) => setEditingProduct({...editingProduct, price: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Image URL</label>
+                <Input 
+                  value={editingProduct.imageUrl} 
+                  onChange={(e) => setEditingProduct({...editingProduct, imageUrl: e.target.value})}
+                />
               </div>
             </div>
-            <DialogFooter>
-              <Button type="submit" disabled={isMutating}>
-                {isMutating ? "Processing..." : isEditing ? "Update Product" : "Add to Homepage"}
+            
+            <div className="flex justify-end gap-2 mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
               </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Product Preview</DialogTitle>
-            <DialogDescription>
-              Preview how this product will appear on the homepage
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {currentProduct.imageUrl && (
-              <div className="aspect-[16/9] overflow-hidden rounded-md">
-                <img 
-                  src={currentProduct.imageUrl} 
-                  alt={currentProduct.name} 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder.svg'; 
-                    (e.target as HTMLImageElement).alt = 'Image not available';
-                  }} 
-                />
-              </div>
-            )}
-            <div className="space-y-1">
-              <h3 className="font-semibold text-lg">{currentProduct.name}</h3>
-              <p className="text-primary font-medium">${parseFloat(currentProduct.price.toString()).toFixed(2)}</p>
-            </div>
-            <p className="text-sm text-muted-foreground">{currentProduct.description}</p>
-            <div className="flex items-center gap-2 mt-2">
-              <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">
-                {currentProduct.featured ? 'Currently featured on homepage' : 'Not featured on homepage'}
-              </span>
+              <Button 
+                onClick={handleSaveProduct}
+                disabled={isSaving}
+              >
+                {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 };

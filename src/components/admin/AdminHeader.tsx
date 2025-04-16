@@ -56,7 +56,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
       <div className="flex flex-1 items-center justify-between">
         <div className="truncate">
           <h1 className="text-base font-semibold sm:text-lg md:text-xl truncate">
-            {greeting}, {admin?.name || "Admin"}
+            {greeting}, {admin?.username || "Admin"}
           </h1>
           <p className="text-xs text-muted-foreground sm:text-sm truncate hidden sm:block">
             Here's what's happening today
@@ -95,7 +95,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
               <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>
-                    {admin?.name?.charAt(0) || "A"}
+                    {admin?.username?.charAt(0) || "A"}
                   </AvatarFallback>
                 </Avatar>
               </Button>

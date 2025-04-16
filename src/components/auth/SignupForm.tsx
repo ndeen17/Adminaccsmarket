@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -46,13 +47,14 @@ const SignupForm = () => {
         toast({
           title: "Success",
           description: "Signup successful. Please verify your email.",
-          variant: "success",
+          variant: "default", // Changed from 'success' to 'default'
         });
         setVerificationStep(true);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Signup failed";
         toast({
           title: "Error",
-          description: error.message || "Signup failed",
+          description: errorMessage,
           variant: "destructive",
         });
         console.error("Signup error:", error);

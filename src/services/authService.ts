@@ -1,152 +1,4 @@
 
-// import { Credentials, AdminData } from "../types/admin";
-// import { delay } from "./utils/apiUtils";
-// import { mockAdmins } from "./mockData";
-
-// // Admin Authentication
-// export const adminSignup = async (credentials: Credentials) => {
-//   await delay(1000);
-//   const existingAdmin = mockAdmins.find(admin => admin.email === credentials.email);
-//   if (existingAdmin) {
-//     throw new Error("Admin with this email already exists");
-//   }
-  
-//   const newAdmin = {
-//     id: (mockAdmins.length + 1).toString(),
-//     name: "New Admin",
-//     email: credentials.email,
-//     role: "admin",
-//     createdAt: new Date().toISOString().split('T')[0]
-//   };
-  
-//   mockAdmins.push(newAdmin);
-//   localStorage.setItem("adminToken", "mock-jwt-token");
-//   localStorage.setItem("adminUser", JSON.stringify(newAdmin));
-  
-//   return { admin: newAdmin, token: "mock-jwt-token" };
-// };
-
-// export const adminLogin = async (credentials: Credentials) => {
-//   await delay(1000);
-//   // Demo admin credentials check
-//   if (
-//     credentials.email === "admin@example.com" &&
-//     credentials.password === "admin123"
-//   ) 
-//   {
-//     const demoAdmin = {
-//       id: "demo",
-//       name: "Demo Admin",
-//       email: "admin@example.com",
-//       role: "admin",
-//       createdAt: new Date().toISOString().split("T")[0],
-//     };
-//     localStorage.setItem("adminToken", "demo-admin-token");
-//     localStorage.setItem("adminUser", JSON.stringify(demoAdmin));
-//     return { admin: demoAdmin, token: "demo-admin-token" };
-//   }
-//   const admin = mockAdmins.find(admin => admin.email === credentials.email);
-  
-//   if (!admin) {
-//     throw new Error("Invalid credentials");
-//   }
-  
-//   localStorage.setItem("adminToken", "mock-jwt-token");
-//   localStorage.setItem("adminUser", JSON.stringify(admin));
-  
-//   return { admin, token: "mock-jwt-token" };
-// };
-
-// export const adminLogout = async () => {
-//   await delay(500);
-//   localStorage.removeItem("adminToken");
-//   localStorage.removeItem("adminUser");
-//   return { success: true };
-// };
-
-// export const verifyAdmin = async () => {
-//   await delay(500);
-//   const token = localStorage.getItem("adminToken");
-//   const adminUser = localStorage.getItem("adminUser");
-  
-//   if (!token || !adminUser) {
-//     throw new Error("Not authenticated");
-//   }
-  
-//   return { admin: JSON.parse(adminUser), isAuthenticated: true };
-// };
-
-// export const forgotPassword = async (email: string) => {
-//   await delay(1000);
-//   const admin = mockAdmins.find(admin => admin.email === email);
-  
-//   if (!admin) {
-//     throw new Error("Admin not found");
-//   }
-  
-//   // In a real implementation, this would send an email with a reset token
-//   return { success: true, message: "Password reset instructions sent to your email" };
-// };
-
-// export const verifyPasswordResetToken = async (token: string) => {
-//   await delay(800);
-//   // In a real implementation, verify the token
-//   return { valid: true };
-// };
-
-// export const resetPassword = async (token: string, newPassword: string) => {
-//   await delay(1000);
-//   // In a real implementation, update the password in the database
-//   return { success: true, message: "Password successfully reset" };
-// };
-// export const changePassword = async (token: string, newPassword: string) => {
-//   await delay(1000);
-//   // In a real implementation, this would update the password in the database
-//   return { success: true, message: "Password successfully changed" };
-// };
-
-// // Admin Management
-// export const getAdmins = async () => {
-//   await delay(800);
-//   return { admins: mockAdmins };
-// };
-
-// export const getAdminById = async (id: string) => {
-//   await delay(800);
-//   const admin = mockAdmins.find(admin => admin.id === id);
-  
-//   if (!admin) {
-//     throw new Error("Admin not found");
-//   }
-  
-//   return { admin };
-// };
-
-// export const updateAdmin = async (id: string, data: Partial<AdminData>) => {
-//   await delay(1000);
-//   const adminIndex = mockAdmins.findIndex(admin => admin.id === id);
-  
-//   if (adminIndex === -1) {
-//     throw new Error("Admin not found");
-//   }
-  
-//   mockAdmins[adminIndex] = { ...mockAdmins[adminIndex], ...data };
-//   return { admin: mockAdmins[adminIndex] };
-// };
-
-// export const deleteAdmin = async (id: string) => {
-//   await delay(1000);
-//   const adminIndex = mockAdmins.findIndex(admin => admin.id === id);
-  
-//   if (adminIndex === -1) {
-//     throw new Error("Admin not found");
-//   }
-  
-//   mockAdmins.splice(adminIndex, 1);
-//   return { success: true };
-// };
-
-
 import { apiClient } from "./apiClient";
 import { AUTH_ENDPOINTS, ADMIN_ENDPOINTS } from "@/config/api";
 
@@ -154,7 +6,7 @@ interface SignupData {
   name: string;
   email: string;
   password: string;
-  code:string;
+  code: string;
 }
 
 interface LoginData {
@@ -169,7 +21,7 @@ interface VerifyCodeData {
 
 interface ForgotPasswordData {
   email: string;
- resetCode: string;
+  resetCode: string;
 }
 
 interface ApproveForgotPasswordData {
@@ -183,6 +35,11 @@ interface ChangePasswordData {
   newPassword: string;
 }
 
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+}
 
 // Helper function for API requests with environment-aware logging
 const apiRequest = async (url: string, method: string, data?: any) => {
@@ -259,6 +116,49 @@ export const verifyAdmin = async () => {
   return await apiRequest(AUTH_ENDPOINTS.VERIFY_ADMIN, 'GET');
 };
 
+export const verifyUser = async (): Promise<User | null> => {
+  try {
+    // In a real app, this would verify the user's token with the API
+    // For now, we'll just return a mock user if there's a token
+    const token = localStorage.getItem('userToken');
+    if (token) {
+      return {
+        id: 'user-1',
+        email: 'user@example.com',
+        name: 'Test User'
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('User verification error:', error);
+    return null;
+  }
+};
+
 export const verifyAdminPasswordChange = async () => {
   return await apiRequest(AUTH_ENDPOINTS.VERIFY_PASSWORD_CHANGE, 'GET');
+};
+
+export const changePassword = async (data: ChangePasswordData) => {
+  // In a real app, this would call an API endpoint
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return { success: true };
+};
+
+export const authService = {
+  adminSignup,
+  adminLogin,
+  adminLogout,
+  adminVerifyCode,
+  forgotPassword,
+  adminApproveForgotPassword,
+  adminChangePassword,
+  verifyAdmin,
+  verifyUser,
+  getAdmins,
+  getAdminProfile,
+  updateAdmin,
+  deleteAdmin,
+  verifyAdminPasswordChange,
+  changePassword
 };
