@@ -112,7 +112,8 @@ const ChatPage: React.FC = () => {
     try {
       const sentMessage = await messageService.sendMessage({
         ticketId,
-        content: content.trim()
+        content: content.trim(),
+        sender: "user"
       });
       
       setMessages(prev => [...prev, sentMessage]);
@@ -132,7 +133,8 @@ const ChatPage: React.FC = () => {
       const sentMessage = await messageService.sendMessage({
         ticketId,
         content: "",
-        attachments: files
+        attachments: files,
+        sender: "user"
       });
       
       setMessages(prev => [...prev, sentMessage]);

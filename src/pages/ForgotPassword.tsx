@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "@/components/auth/AuthLayout";
@@ -46,7 +47,7 @@ const ForgotPassword = () => {
       toast({
         title: "Success",
         description: "Code verified. You can now reset your password.",
-        variant: "success",
+        variant: "default",
       });
       navigate("/login");
     } catch (error: any) {

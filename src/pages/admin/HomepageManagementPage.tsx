@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductService } from "@/services/productService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpDown, Check, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { ProductData } from "@/types/admin";
 
 export type HomepageProduct = {
   id: string;
@@ -41,11 +42,11 @@ const HomepageManagementPage = () => {
         setIsLoading(true);
         const response = await ProductService.getFeaturedProducts();
         
-        // Transform to HomepageProduct type and add position
         const featuredProducts = response.products.map((product, index) => ({
           ...product,
           position: index + 1,
-          imageUrl: product.imageUrl || "/placeholder.svg"
+          imageUrl: product.imageUrl || "/placeholder.svg",
+          price: typeof product.price === 'number' ? product.price.toString() : product.price
         })) as HomepageProduct[];
         
         setProducts(featuredProducts);
@@ -83,13 +84,24 @@ const HomepageManagementPage = () => {
     setIsSaving(true);
     try {
       if (editingProduct.id) {
-        // Update existing product
-        await ProductService.updateProductOnHomepage(editingProduct.id, editingProduct);
+        const productForApi = {
+          ...editingProduct,
+          price: parseFloat(editingProduct.price)
+        };
+        await ProductService.updateProductOnHomepage(editingProduct.id, productForApi);
         setProducts(products.map(p => p.id === editingProduct.id ? editingProduct : p));
       } else {
-        // Add new product
-        const response = await ProductService.postProductToHomepage(editingProduct);
-        setProducts([...products, { ...response.product, position: products.length + 1 } as HomepageProduct]);
+        const productForApi = {
+          ...editingProduct,
+          price: parseFloat(editingProduct.price)
+        };
+        const response = await ProductService.postProductToHomepage(productForApi);
+        const newProduct = { 
+          ...response.product, 
+          position: products.length + 1,
+          price: typeof response.product.price === 'number' ? response.product.price.toString() : response.product.price 
+        } as HomepageProduct;
+        setProducts([...products, newProduct]);
       }
       setIsModalOpen(false);
     } catch (error) {
@@ -120,10 +132,8 @@ const HomepageManagementPage = () => {
     const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     const newProducts = [...products];
     
-    // Swap positions
     [newProducts[currentIndex], newProducts[newIndex]] = [newProducts[newIndex], newProducts[currentIndex]];
     
-    // Update position numbers
     newProducts.forEach((product, index) => {
       product.position = index + 1;
     });
@@ -132,9 +142,7 @@ const HomepageManagementPage = () => {
   };
   
   const handleSaveHero = () => {
-    // In a real app, this would save to an API
     console.log("Saving hero content:", heroContent);
-    // Show success message
   };
   
   const handleToggleAnnouncement = (id: string) => {
@@ -144,9 +152,7 @@ const HomepageManagementPage = () => {
   };
   
   const handleSaveAnnouncements = () => {
-    // In a real app, this would save to an API
     console.log("Saving announcements:", announcements);
-    // Show success message
   };
   
   return (

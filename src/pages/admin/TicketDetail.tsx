@@ -1,39 +1,21 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  getTicketById,
-  closeTicket,
-  assignTicket,
-} from "@/services/ticketsService";
-import {
-  getMessagesByTicketId,
-  sendMessageAsAdmin,
-  markMessageSeenByAdmin,
-  uploadMessageFiles,
-} from "@/services/messagesService";
+import { getTicketById, closeTicket, assignTicket } from "@/services/ticketsService";
+import { getMessagesByTicketId, sendMessageAsAdmin, markMessageSeenByAdmin, uploadMessageFiles } from "@/services/messagesService";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardFooter,
-  CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "@/lib/toast";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  MessageSquare,
-  ChevronLeft,
-  Paperclip,
-  Send,
-  UserCheck,
-  CheckCircle,
-} from "lucide-react";
+import { MessageSquare, ChevronLeft, Paperclip, Send, UserCheck, CheckCircle, X, FileText, Image } from "lucide-react";
 
 interface Message {
   id: string;
@@ -44,12 +26,14 @@ interface Message {
   messageType: string;
   seen: boolean;
   time_received: string;
+  attachments?: string[];
 }
 
 const TicketDetail = () => {
   const { ticketId } = useParams<{ ticketId: string }>();
   const [newMessage, setNewMessage] = useState("");
   const [files, setFiles] = useState<FileList | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -69,7 +53,7 @@ const TicketDetail = () => {
     queryKey: ["messages", ticketId],
     queryFn: () => getMessagesByTicketId(ticketId!),
     enabled: !!ticketId,
-    refetchInterval: 40000, // Refetch messages every 10 seconds
+    refetchInterval: 40000, // Refetch messages every 40 seconds
   });
 
   const sendMessageMutation = useMutation({
@@ -77,6 +61,7 @@ const TicketDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["messages", ticketId] });
       setNewMessage("");
+      setSelectedFiles([]);
       setFiles(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -132,6 +117,7 @@ const TicketDetail = () => {
         message_type: "file",
       });
       setIsUploading(false);
+      setSelectedFiles([]);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to upload files");
@@ -181,9 +167,44 @@ const TicketDetail = () => {
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    console.log(messagesData);
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messagesData?.result]);
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setSelectedFiles(filesArray);
+      setFiles(e.target.files);
+    }
+  };
+
+  // Remove a selected file
+  const removeFile = (index: number) => {
+    const newSelectedFiles = [...selectedFiles];
+    newSelectedFiles.splice(index, 1);
+    setSelectedFiles(newSelectedFiles);
+    
+    // Create a new DataTransfer object
+    const dataTransfer = new DataTransfer();
+    
+    // Add remaining files to the DataTransfer object
+    if (files) {
+      Array.from(files).forEach((file, i) => {
+        if (i !== index) {
+          dataTransfer.items.add(file);
+        }
+      });
+    }
+    
+    // Set the new FileList
+    setFiles(dataTransfer.files);
+    
+    // Reset file input if all files are removed
+    if (dataTransfer.files.length === 0 && fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,13 +245,25 @@ const TicketDetail = () => {
     assignTicketMutation.mutate(ticketId!);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFiles(e.target.files);
+  // Trigger file input click
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
   };
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleString();
+  };
+
+  // Get file icon based on type
+  const getFileIcon = (filename: string) => {
+    const extension = filename.split(".").pop()?.toLowerCase();
+
+    if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension || "")) {
+      return <Image className="h-4 w-4" />;
+    }
+
+    return <FileText className="h-4 w-4" />;
   };
 
   if (isTicketLoading) {
@@ -260,7 +293,7 @@ const TicketDetail = () => {
           </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              {ticket?.title}
+              {ticket?.title || "Support Ticket"}
             </h1>
             <p className="text-muted-foreground">
               Ticket #{ticket?.id} - {ticket?.status}
@@ -310,12 +343,12 @@ const TicketDetail = () => {
               ) : (
                 <div className="space-y-4">
                   {messages
-                    .slice() // Create a shallow copy of the array to avoid mutating the original
+                    .slice()
                     .sort(
                       (a: Message, b: Message) =>
                         new Date(a.time_received).getTime() -
                         new Date(b.time_received).getTime()
-                    ) // Sort by time_received
+                    )
                     .map((message: Message) => {
                       const isAdmin =
                         message.admin_id === admin?.admin_id ||
@@ -324,40 +357,55 @@ const TicketDetail = () => {
                         <div
                           key={message.id}
                           className={`flex ${
-                            !isAdmin ? "justify-end" : "justify-start"
+                            isAdmin ? "justify-end" : "justify-start"
                           }`}
                         >
                           <div
                             className={`flex ${
-                              !isAdmin ? "flex-row-reverse" : "flex-row"
+                              isAdmin ? "flex-row-reverse" : "flex-row"
                             } items-start gap-2 max-w-[80%]`}
                           >
                             <Avatar className="h-8 w-8">
                               <AvatarFallback>
-                                {!isAdmin ? "A" : "U"}
+                                {isAdmin ? "A" : "U"}
                               </AvatarFallback>
                             </Avatar>
                             <div>
                               <div
                                 className={`px-4 py-2 rounded-lg ${
-                                  !isAdmin
+                                  isAdmin
                                     ? "bg-primary text-primary-foreground"
                                     : "bg-muted"
                                 }`}
                               >
                                 {message.message.startsWith("get-image") ? (
                                   <img
-                                    src={fetchedImage[message.id]}
-                                    alt="Image loading ..."
+                                    src={fetchedImage[message.id] || ""}
+                                    alt="Loading..."
                                     className="max-w-full h-auto"
                                   />
+                                ) : message.messageType === "file" ? (
+                                  <div className="space-y-1">
+                                    {message.message.split(", ").map((url, index) => (
+                                      <a
+                                        key={index}
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center text-sm underline"
+                                      >
+                                        {getFileIcon(url)}
+                                        <span className="ml-1">Attachment {index + 1}</span>
+                                      </a>
+                                    ))}
+                                  </div>
                                 ) : (
                                   <p>{message.message}</p>
                                 )}
                               </div>
                               <p
                                 className={`text-xs mt-1 text-muted-foreground ${
-                                  !isAdmin ? "text-right" : "text-left"
+                                  isAdmin ? "text-right" : "text-left"
                                 }`}
                               >
                                 {formatTimestamp(message.time_received)}
@@ -373,61 +421,81 @@ const TicketDetail = () => {
             </CardContent>
             <CardFooter className="border-t p-4">
               <form onSubmit={handleSendMessage} className="w-full">
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder={
-                      isClosed
-                        ? "This ticket is closed"
-                        : "Type your message here..."
-                    }
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    disabled={isClosed || !isAssignedToCurrentAdmin}
-                    className="flex-1 min-h-[60px]"
-                  />
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      disabled={isClosed || !isAssignedToCurrentAdmin}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Paperclip className="h-4 w-4" />
-                      <span className="sr-only">Attach file</span>
-                    </Button>
-                    <Button
-                      type="submit"
-                      size="icon"
-                      disabled={
-                        isClosed ||
-                        isUploading ||
-                        sendMessageMutation.isPending ||
-                        (!newMessage.trim() &&
-                          (!files || files.length === 0)) ||
-                        !isAssignedToCurrentAdmin
+                <div className="flex flex-col space-y-2 w-full">
+                  {selectedFiles.length > 0 && (
+                    <div className="border-t border-gray-200 pt-2 px-3 mb-2">
+                      <p className="text-sm text-gray-500 mb-1">Selected files:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedFiles.map((file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center bg-gray-100 rounded-md px-2 py-1 text-sm"
+                          >
+                            {getFileIcon(file.name)}
+                            <span className="mx-1 max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">
+                              {file.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeFile(index)}
+                              className="text-gray-500 hover:text-red-500"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-2">
+                    <textarea
+                      placeholder={
+                        isClosed
+                          ? "This ticket is closed"
+                          : "Type your message here..."
                       }
-                    >
-                      <Send className="h-4 w-4" />
-                      <span className="sr-only">Send message</span>
-                    </Button>
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      disabled={isClosed || !isAssignedToCurrentAdmin}
+                      className="flex-1 min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        disabled={isClosed || !isAssignedToCurrentAdmin}
+                        onClick={handleAttachClick}
+                      >
+                        <Paperclip className="h-4 w-4" />
+                        <span className="sr-only">Attach file</span>
+                      </Button>
+                      <Button
+                        type="submit"
+                        size="icon"
+                        disabled={
+                          isClosed ||
+                          isUploading ||
+                          sendMessageMutation.isPending ||
+                          (!newMessage.trim() && (!files || files.length === 0)) ||
+                          !isAssignedToCurrentAdmin
+                        }
+                      >
+                        <Send className="h-4 w-4" />
+                        <span className="sr-only">Send message</span>
+                      </Button>
+                    </div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                      multiple
+                    />
                   </div>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    multiple
-                  />
                 </div>
-                {files && files.length > 0 && (
-                  <div className="mt-2 text-sm">
-                    <span className="font-medium">Selected files:</span>{" "}
-                    {Array.from(files)
-                      .map((file) => file.name)
-                      .join(", ")}
-                  </div>
-                )}
+                
                 {!isAssignedToCurrentAdmin && !isClosed && (
                   <p className="text-sm text-amber-500 mt-2">
                     You need to assign this ticket to yourself before you can
@@ -456,7 +524,7 @@ const TicketDetail = () => {
                   Created On
                 </p>
                 <p className="font-medium">
-                  {new Date(ticket?.created_at).toLocaleDateString()}
+                  {ticket?.created_at ? new Date(ticket.created_at).toLocaleDateString() : "N/A"}
                 </p>
               </div>
               <div>
@@ -473,12 +541,6 @@ const TicketDetail = () => {
                   {ticket?.admin_id || "Unassigned"}
                 </p>
               </div>
-              {/* <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Description
-                </p>
-                <p className="text-sm">{ticket?.description}</p>
-              </div> */}
             </CardContent>
           </Card>
         </div>

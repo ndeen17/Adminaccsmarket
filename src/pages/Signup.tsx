@@ -10,6 +10,7 @@ const Signup = () => {
     <>
       <Helmet>
         <title>Sign Up | AccsMarket - Social Media Accounts Store</title>
+        <meta name="description" content="Create your account to access premium digital products and services." />
       </Helmet>
       <AuthLayout>
         <div className="flex flex-col space-y-2 text-center">

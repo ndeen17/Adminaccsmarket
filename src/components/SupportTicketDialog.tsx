@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
@@ -61,7 +62,6 @@ const SupportTicketDialog = ({
       try {
         const response = await authService.verifyUser();
         if (response) {
-          // console.log(response);
           setUserId(response.id);
         }
       } catch (error) {
@@ -175,10 +175,14 @@ const SupportTicketDialog = ({
 
     setIsSendingMessage(true);
     try {
+      let content = newMessage;
+      const attachments = selectedFiles;
+      
       const sentMessage = await messageService.sendMessage({
         ticketId,
-        content: newMessage,
-        attachments: selectedFiles,
+        content,
+        attachments,
+        sender: "user"
       });
 
       setMessages((prev) => [...prev, sentMessage]);

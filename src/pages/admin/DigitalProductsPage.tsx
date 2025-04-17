@@ -1,9 +1,12 @@
+
 import { useEffect, useState } from "react";
 import {
   getDigitalProducts,
   createDigitalProduct,
   updateDigitalProduct,
   deleteDigitalProduct,
+  Product,
+  DigitalProduct,
 } from "@/services/digitalProductsService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,20 +39,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/lib/toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-interface DigitalProduct {
-  id?: string;
-  platform_name: string;
-  category: string;
-  price: number;
-  description: string;
-  stock_quantity?: number;
-  data_format: string;
-  important_notice: string;
-  files?: File[];
-  on_homepage?: string;
-  created_at?: string;
-}
 
 const categoryOptions = [
   "Facebook",
@@ -102,7 +91,7 @@ const DigitalProductsPage = () => {
 
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery<DigitalProduct[]>({
+  const { data, isLoading } = useQuery<Product[]>({
     queryKey: ["digitalProducts"],
     queryFn: getDigitalProducts,
   });
@@ -145,7 +134,7 @@ const DigitalProductsPage = () => {
 
   const uploadFilesMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      return await createDigitalProduct(formData); // Ensure this function accepts FormData
+      return await createDigitalProduct(formData);
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["digitalProducts"] });
@@ -157,15 +146,28 @@ const DigitalProductsPage = () => {
     },
   });
 
-  const filteredProducts =
-    data?.filter(
-      (product: DigitalProduct) =>
-        product.platform_name
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase())
-    ) || [];
+  // Convert Product[] to DigitalProduct[] for type compatibility
+  const filteredProducts = data 
+    ? data
+        .filter(
+          (product) =>
+            product.platform_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            product.description.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .map((product): DigitalProduct => ({
+          id: product.id,
+          platform_name: product.platform_name,
+          category: product.category,
+          price: product.price,
+          description: product.description,
+          data_format: product.data_format || "",
+          important_notice: product.important_notice || "",
+          stock_quantity: product.stock_quantity,
+          on_homepage: product.on_homepage,
+          created_at: product.created_at,
+        }))
+    : [];
 
   const handleOpenDialog = (product?: DigitalProduct) => {
     if (product) {
@@ -195,7 +197,6 @@ const DigitalProductsPage = () => {
       ...currentProduct,
       [name]: name === "price" ? parseFloat(value) : value,
     });
-    // console.log(currentProduct);
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -209,16 +210,13 @@ const DigitalProductsPage = () => {
     const files = e.target.files;
 
     if (files) {
-      // Allowed file types
       const allowedTypes = [
-        "application/pdf", // PDF
-        "application/msword", // Word (DOC)
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // Word (DOCX)
-        // "application/zip", // ZIP
-        "text/plain", // TXT
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain",
       ];
 
-      // Filter files based on allowed types
       const filteredFiles = Array.from(files).filter((file) =>
         allowedTypes.includes(file.type)
       );
@@ -233,8 +231,7 @@ const DigitalProductsPage = () => {
         return;
       }
 
-      // Set the filtered files
-      setSelectedFiles(filteredFiles as unknown as FileList);
+      setSelectedFiles(files);
 
       setCurrentProduct((prev) => ({
         ...prev,
@@ -248,7 +245,6 @@ const DigitalProductsPage = () => {
 
     const formData = new FormData();
 
-    // Append product details to FormData
     formData.append("platform_name", currentProduct.platform_name || "");
     formData.append("category", currentProduct.category || "");
     formData.append("price", currentProduct.price.toString() || "0");
@@ -256,24 +252,15 @@ const DigitalProductsPage = () => {
     formData.append("data_format", currentProduct.data_format || "");
     formData.append("important_notice", currentProduct.important_notice || "");
 
-    // Append files to FormData
-    // if (selectedFiles && selectedFiles.length > 0) {
-    //   Array.from(selectedFiles).forEach((file) => {
-    //     formData.append("files", file);
-    //   });
-    // }
-    for (let i = 0; i < selectedFiles.length; i++) {
-      formData.append("files", selectedFiles[i]); // Ensure correct array name
+    if (selectedFiles) {
+      for (let i = 0; i < selectedFiles.length; i++) {
+        formData.append("files", selectedFiles[i]);
+      }
     }
-    console.log(formData);
-    // // Debugging: Log FormData content
-    // for (let [key, value] of formData.entries()) {
-    //   console.log(`${key}: ${value}`);
-    // }
 
-    // Call the mutation to upload files
     createProductMutation.mutate(formData);
   };
+
   const handleDeleteProduct = (id: string) => {
     if (
       window.confirm(
@@ -371,14 +358,14 @@ const DigitalProductsPage = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
-                        {/* <Button
+                        <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleOpenDialog(product)}
                         >
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
-                        </Button> */}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -479,23 +466,6 @@ const DigitalProductsPage = () => {
                   rows={3}
                   required
                 />
-                {/* <Select
-                  value={currentProduct.data_format}
-                  onValueChange={(value) =>
-                    handleSelectChange("data_format", value)
-                  }
-                >
-                  <SelectTrigger id="data_format">
-                    <SelectValue placeholder="Select format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dataFormatOptions.map((format) => (
-                      <SelectItem key={format} value={format}>
-                        {format}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select> */}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="important_notice">Important Notice</Label>
@@ -505,6 +475,7 @@ const DigitalProductsPage = () => {
                   value={currentProduct.important_notice}
                   onChange={handleInputChange}
                   placeholder="Any important information"
+                  required
                 />
               </div>
               <div className="space-y-2 md:col-span-2">

@@ -1,12 +1,37 @@
 
 import { delay } from "./utils/apiUtils";
 
+export interface Ticket {
+  id: string;
+  subject: string;
+  status: "open" | "closed";
+  category: string;
+  createdAt: string;
+  updatedAt: string;
+  unreadCount: number;
+}
+
 interface CreateTicketData {
   subject: string;
   message: string;
   category: string;
   user_id: string;
 }
+
+export const getTicket = async (ticketId: string) => {
+  await delay(800);
+  
+  // In a real app, this would fetch the ticket from an API
+  return {
+    id: ticketId,
+    subject: "Support Request",
+    status: "open" as const,
+    category: "technical",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    unreadCount: 2
+  };
+};
 
 export const createTicket = async (ticketData: CreateTicketData) => {
   await delay(1000);
@@ -18,7 +43,7 @@ export const createTicket = async (ticketData: CreateTicketData) => {
   };
 };
 
-export const getUserTickets = async (userId: string) => {
+export const getUserTickets = async (userId: string): Promise<Ticket[]> => {
   await delay(800);
   
   // In a real app, this would fetch the user's tickets from an API
@@ -46,5 +71,6 @@ export const getUserTickets = async (userId: string) => {
 
 export const ticketService = {
   createTicket,
-  getUserTickets
+  getUserTickets,
+  getTicket
 };

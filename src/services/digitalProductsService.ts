@@ -8,12 +8,15 @@ export interface Product {
   imageUrl?: string;
   category: string;
   featured: boolean;
-  platform_name?: string;
+  platform_name: string;
   data_format?: string;
   important_notice?: string;
   stock_quantity?: number;
   on_homepage?: string;
   created_at?: string;
+  date_created?: string;
+  homepage_position?: number;
+  updated_at?: string | null;
 }
 
 // For compatibility with DigitalProductsPage component
@@ -21,7 +24,7 @@ export interface DigitalProduct {
   id?: string;
   platform_name: string;
   category: string;
-  price: number;
+  price: number | string;
   description: string;
   stock_quantity?: number;
   data_format: string;
@@ -45,7 +48,8 @@ export const fetchFeaturedProducts = async (): Promise<Record<string, Product[]>
         price: "$99.99",
         imageUrl: "/placeholder.svg",
         category: "Instagram",
-        featured: true
+        featured: true,
+        platform_name: "Instagram Premium Account"
       }
     ],
     "Twitter": [
@@ -56,7 +60,8 @@ export const fetchFeaturedProducts = async (): Promise<Record<string, Product[]>
         price: "$149.99",
         imageUrl: "/placeholder.svg",
         category: "Twitter",
-        featured: true
+        featured: true,
+        platform_name: "Twitter Verified Account"
       }
     ],
     "Facebook": [
@@ -67,7 +72,8 @@ export const fetchFeaturedProducts = async (): Promise<Record<string, Product[]>
         price: "$129.99",
         imageUrl: "/placeholder.svg",
         category: "Facebook",
-        featured: true
+        featured: true,
+        platform_name: "Facebook Page"
       }
     ]
   };

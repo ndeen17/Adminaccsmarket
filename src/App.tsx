@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,16 +6,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-// Public pages
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-
 // Admin Auth pages
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminSignup from "./pages/admin/AdminSignup";
 import ForgotPassword from "./pages/admin/ForgotPassword";
 import ResetPassword from "./pages/admin/ResetPassword";
 import ChangePassword from "./pages/admin/ChangePassword";
+import NotFound from "./pages/NotFound";
 
 // Admin Dashboard pages
 import AdminLayout from "./components/admin/AdminLayout";
@@ -49,9 +47,9 @@ const App = () => (
           <Toaster />
           <Sonner />
           <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
-
+            {/* Set Admin Signup as the default route */}
+            <Route path="/" element={<Navigate to="/admin/signup" replace />} />
+            
             {/* Admin Auth Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/signup" element={<AdminSignup />} />
