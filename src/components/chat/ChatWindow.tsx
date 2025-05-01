@@ -1,8 +1,7 @@
-
-import React, { useEffect, useRef } from 'react';
-import { Message } from '@/services/messageService';
-import ChatMessage from './ChatMessage';
-import ChatInput from './ChatInput';
+import React, { useEffect, useRef } from "react";
+import { Message } from "@/pages/ChatPage";
+import ChatMessage from "./ChatMessage";
+import ChatInput from "./ChatInput";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ChatWindowProps {
@@ -50,16 +49,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               key={msg.id}
               id={msg.id}
               content={msg.content}
-              sender={msg.sender}
-              timestamp={msg.timestamp}
-              seen={msg.seen}
+              sender={msg.sender_id}
+              time_received={msg.time_received}
+              seen_by_admin={msg.seen_by_admin}
               attachments={msg.attachments}
             />
           ))
         ) : (
           // No messages
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500">No messages yet. Start the conversation!</p>
+            <p className="text-gray-500">
+              No messages yet. Start the conversation!
+            </p>
           </div>
         )}
         <div ref={messagesEndRef} />

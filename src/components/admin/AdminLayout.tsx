@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Outlet, Navigate, useLocation } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
@@ -56,7 +55,7 @@ const AdminLayout = () => {
         )}
         <div
           className={`flex flex-col flex-1 overflow-hidden transition-all duration-300 ${
-            isSidebarOpen && !isMobile ? "md:ml-64" : ""
+            isSidebarOpen && !isMobile ? "md:ml-64 lg:ml-0" : ""
           }`}
         >
           <AdminHeader

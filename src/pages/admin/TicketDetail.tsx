@@ -1,8 +1,16 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getTicketById, closeTicket, assignTicket } from "@/services/ticketsService";
-import { getMessagesByTicketId, sendMessageAsAdmin, markMessageSeenByAdmin, uploadMessageFiles } from "@/services/messagesService";
+import {
+  getTicketById,
+  closeTicket,
+  assignTicket,
+} from "@/services/ticketsService";
+import {
+  getMessagesByTicketId,
+  sendMessageAsAdmin,
+  markMessageSeenByAdmin,
+  uploadMessageFiles,
+} from "@/services/messagesService";
 import {
   Card,
   CardContent,
@@ -15,13 +23,23 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { MessageSquare, ChevronLeft, Paperclip, Send, UserCheck, CheckCircle, X, FileText, Image } from "lucide-react";
+import {
+  MessageSquare,
+  ChevronLeft,
+  Paperclip,
+  Send,
+  UserCheck,
+  CheckCircle,
+  X,
+  FileText,
+  Image,
+} from "lucide-react";
 
 interface Message {
   id: string;
   message: string;
   ticketId: string;
-  senderId: string;
+  sender_id: string;
   admin_id?: string;
   messageType: string;
   seen: boolean;
@@ -158,7 +176,7 @@ const TicketDetail = () => {
   useEffect(() => {
     if (messagesData?.result) {
       messagesData.result.forEach((message: Message) => {
-        if (!message.seen && message.senderId !== admin?.admin_id) {
+        if (!message.seen && message.sender_id !== admin?.admin_id) {
           markSeenMutation.mutate(message.id);
         }
       });
@@ -184,10 +202,10 @@ const TicketDetail = () => {
     const newSelectedFiles = [...selectedFiles];
     newSelectedFiles.splice(index, 1);
     setSelectedFiles(newSelectedFiles);
-    
+
     // Create a new DataTransfer object
     const dataTransfer = new DataTransfer();
-    
+
     // Add remaining files to the DataTransfer object
     if (files) {
       Array.from(files).forEach((file, i) => {
@@ -196,10 +214,10 @@ const TicketDetail = () => {
         }
       });
     }
-    
+
     // Set the new FileList
     setFiles(dataTransfer.files);
-    
+
     // Reset file input if all files are removed
     if (dataTransfer.files.length === 0 && fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -350,9 +368,7 @@ const TicketDetail = () => {
                         new Date(b.time_received).getTime()
                     )
                     .map((message: Message) => {
-                      const isAdmin =
-                        message.admin_id === admin?.admin_id ||
-                        message.admin_id === "admin";
+                      const isAdmin = message.sender_id === "admin";
                       return (
                         <div
                           key={message.id}
@@ -386,18 +402,22 @@ const TicketDetail = () => {
                                   />
                                 ) : message.messageType === "file" ? (
                                   <div className="space-y-1">
-                                    {message.message.split(", ").map((url, index) => (
-                                      <a
-                                        key={index}
-                                        href={url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center text-sm underline"
-                                      >
-                                        {getFileIcon(url)}
-                                        <span className="ml-1">Attachment {index + 1}</span>
-                                      </a>
-                                    ))}
+                                    {message.message
+                                      .split(", ")
+                                      .map((url, index) => (
+                                        <a
+                                          key={index}
+                                          href={url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-center text-sm underline"
+                                        >
+                                          {getFileIcon(url)}
+                                          <span className="ml-1">
+                                            Attachment {index + 1}
+                                          </span>
+                                        </a>
+                                      ))}
                                   </div>
                                 ) : (
                                   <p>{message.message}</p>
@@ -424,7 +444,9 @@ const TicketDetail = () => {
                 <div className="flex flex-col space-y-2 w-full">
                   {selectedFiles.length > 0 && (
                     <div className="border-t border-gray-200 pt-2 px-3 mb-2">
-                      <p className="text-sm text-gray-500 mb-1">Selected files:</p>
+                      <p className="text-sm text-gray-500 mb-1">
+                        Selected files:
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {selectedFiles.map((file, index) => (
                           <div
@@ -447,7 +469,7 @@ const TicketDetail = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="flex gap-2">
                     <textarea
                       placeholder={
@@ -478,7 +500,8 @@ const TicketDetail = () => {
                           isClosed ||
                           isUploading ||
                           sendMessageMutation.isPending ||
-                          (!newMessage.trim() && (!files || files.length === 0)) ||
+                          (!newMessage.trim() &&
+                            (!files || files.length === 0)) ||
                           !isAssignedToCurrentAdmin
                         }
                       >
@@ -495,7 +518,7 @@ const TicketDetail = () => {
                     />
                   </div>
                 </div>
-                
+
                 {!isAssignedToCurrentAdmin && !isClosed && (
                   <p className="text-sm text-amber-500 mt-2">
                     You need to assign this ticket to yourself before you can
@@ -524,7 +547,9 @@ const TicketDetail = () => {
                   Created On
                 </p>
                 <p className="font-medium">
-                  {ticket?.created_at ? new Date(ticket.created_at).toLocaleDateString() : "N/A"}
+                  {ticket?.created_at
+                    ? new Date(ticket.created_at).toLocaleDateString()
+                    : "N/A"}
                 </p>
               </div>
               <div>

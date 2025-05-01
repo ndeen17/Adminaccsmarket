@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { adminLogin, verifyAdmin } from "@/services/authService";
+import { adminLogin } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,45 +15,24 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "@/lib/toast";
 
-interface AdminData {
-  id: string;
-  name?: string;
-  email: string;
-  role?: string;
-  createdAt?: string;
-}
-
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { isAuthenticated, login } = useAuth();
 
-  // useEffect(() => {
-  //   const checkAuthStatus = async () => {
-  //     try {
-  //       const admin = await verifyAdmin();
-  //       console.log(admin);
-  //       if (admin && admin.admin_id) {
-  //         // setAdmin(admin as Admin);
-  //         // setIsAuthenticated(true);
-  //       }
-  //     } catch (error) {
-  //       // setAdmin(null);
-  //       // setIsAuthenticated(true);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   checkAuthStatus();
-  // }, []);
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/admin/dashboard"); // Redirect to the dashboard if already logged in
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      toast.error("input fields cannot be empty");
+      toast.error("Input fields cannot be empty");
       return;
     }
     setIsLoading(true);
@@ -65,10 +44,11 @@ const AdminLogin = () => {
       if (data.message) {
         toast.error(data.message);
       } else {
-        toast.error(data.status);
-        // Redirect to the signed-in homepage after 2 seconds.
+        toast.success("Login successful");
+        // Use the login function from the AuthContext to store the admin data
+        login(data); // Assuming `data` contains the admin details
         setTimeout(() => {
-          navigate("/"); // Adjust this route if your signed-in homepage is registered elsewhere.
+          navigate("/admin/dashboard"); // Adjust this route if your signed-in homepage is registered elsewhere.
         }, 2000);
       }
     } catch (error: any) {
@@ -78,6 +58,7 @@ const AdminLogin = () => {
       setIsLoading(false);
     }
   };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
       <div className="w-full max-w-md animate-fade-in">

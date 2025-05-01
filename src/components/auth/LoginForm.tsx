@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,8 @@ const LoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Simple validation check
     if (!email || !password) {
       toast({
         title: "Error",
@@ -27,26 +28,25 @@ const LoginForm = () => {
       });
       return;
     }
-    
+
     setIsLoading(true);
     try {
       const response = await adminLogin({ email, password });
-      
-      // If login is successful
+
       if (!response.message) {
-        // Call the login function from AuthContext to update authentication state
+        // Login successful
         await login(response);
-        
+
         toast({
           title: "Success",
           description: "Logged in successfully",
           variant: "default",
         });
-        
+
         // Navigate to admin dashboard
         navigate("/admin/dashboard");
       } else {
-        // Handle login errors
+        // Login error
         toast({
           title: "Error",
           description: response.message,

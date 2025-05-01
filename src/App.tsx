@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -48,8 +47,11 @@ const App = () => (
           <Sonner />
           <Routes>
             {/* Set Admin Signup as the default route */}
-            <Route path="/" element={<Navigate to="/admin/signup" replace />} />
-            
+            <Route
+              path="/"
+              element={<Navigate to="/admin/dashboard" replace />}
+            />
+
             {/* Admin Auth Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/signup" element={<AdminSignup />} />

@@ -1,5 +1,4 @@
-
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Users,
@@ -16,7 +15,7 @@ import {
   FileText,
   User,
   LayoutDashboard,
-  X
+  X,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -26,15 +25,29 @@ interface SidebarLinkProps {
   href: string;
   icon: React.ElementType;
   label: string;
+  onClick?: () => void;
 }
 
-const SidebarLink = ({ href, icon: Icon, label }: SidebarLinkProps) => {
+const SidebarLink = ({
+  href,
+  icon: Icon,
+  label,
+  onClick,
+}: SidebarLinkProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isActive = location.pathname.startsWith(href);
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onClick?.();
+    navigate(href);
+  };
+
   return (
-    <Link
-      to={href}
+    <a
+      href={href}
+      onClick={handleClick}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:text-primary",
         isActive
@@ -44,7 +57,7 @@ const SidebarLink = ({ href, icon: Icon, label }: SidebarLinkProps) => {
     >
       <Icon className="h-4 w-4" />
       <span>{label}</span>
-    </Link>
+    </a>
   );
 };
 
@@ -78,7 +91,12 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
             <span>Admin Portal</span>
           </Link>
           {isMobile && (
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={onClose}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={onClose}
+            >
               <X className="h-4 w-4" />
             </Button>
           )}
@@ -90,56 +108,67 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
               href="/admin/dashboard"
               icon={Home}
               label="Dashboard"
+              onClick={onClose}
             />
             <SidebarLink
               href="/admin/dashboard/users"
               icon={Users}
               label="Users Management"
+              onClick={onClose}
             />
             <SidebarLink
               href="/admin/dashboard/digital-products"
               icon={FileText}
               label="Digital Products"
+              onClick={onClose}
             />
             <SidebarLink
               href="/admin/dashboard/homepage-management"
               icon={LayoutDashboard}
               label="Homepage"
+              onClick={onClose}
             />
             <SidebarLink
               href="/admin/dashboard/orders"
               icon={ShoppingCart}
               label="Orders"
+              onClick={onClose}
             />
             <SidebarLink
               href="/admin/dashboard/payments"
               icon={CreditCard}
               label="Payments"
+              onClick={onClose}
             />
             <SidebarLink
               href="/admin/dashboard/coupons"
               icon={Tag}
               label="Coupons"
+              onClick={onClose}
             />
             <SidebarLink
               href="/admin/dashboard/tickets"
               icon={MessageSquare}
               label="Support Tickets"
+              onClick={onClose}
             />
             <SidebarLink
               href="/admin/dashboard/wallet"
               icon={Wallet}
               label="Wallet Management"
+              onClick={onClose}
             />
             <SidebarLink
               href="/admin/dashboard/analytics"
               icon={BarChart3}
               label="Analytics"
+              onClick={onClose}
             />
             <SidebarLink
               href="/admin/dashboard/profile"
               icon={User}
               label="Profile"
+              onClick={onClose}
             />
           </nav>
         </div>

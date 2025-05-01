@@ -3,10 +3,11 @@ import { apiClient } from "./apiClient";
 import { AUTH_ENDPOINTS, ADMIN_ENDPOINTS } from "@/config/api";
 
 interface SignupData {
-  name: string;
+  username: string;
   email: string;
   password: string;
   code: string;
+  role: string;
 }
 
 interface LoginData {

@@ -1,4 +1,3 @@
-
 import {
   createContext,
   useState,
@@ -6,7 +5,7 @@ import {
   useEffect,
   ReactNode,
 } from "react";
-import { verifyAdmin } from "@/services/authService";
+import { verifyAdmin, adminLogout } from "@/services/authService";
 import { toast } from "@/lib/toast";
 
 interface Admin {
@@ -31,7 +30,12 @@ interface AuthContextType {
   isLoading: boolean;
   login: (admin: Admin) => void;
   logout: () => void;
-  signup: (name: string, email: string, password: string, code: string) => Promise<void>;
+  signup: (
+    name: string,
+    email: string,
+    password: string,
+    code: string
+  ) => Promise<void>;
   verifyCode: (email: string, code: string) => Promise<void>;
 }
 
@@ -74,33 +78,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     toast.success("Successfully logged in");
   };
 
-  const logout = () => {
-    setAdmin(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminUser");
-    toast.success("Successfully logged out");
+  const logout = async () => {
+    try {
+      await adminLogout(); // Call the backend logout endpoint
+      setAdmin(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
+      toast.success("Successfully logged out");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Logout failed. Please try again.");
+    }
   };
-  
+
   // Added mock signup function
-  const signup = async (name: string, email: string, password: string, code: string) => {
+  const signup = async (
+    name: string,
+    email: string,
+    password: string,
+    code: string
+  ) => {
     setIsLoading(true);
     try {
       // In a real app, call API endpoint for signup
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
       throw error;
     }
   };
-  
+
   // Added mock verify code function
   const verifyCode = async (email: string, code: string) => {
     setIsLoading(true);
     try {
       // In a real app, call API endpoint for verification
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
@@ -118,7 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         signup,
-        verifyCode
+        verifyCode,
       }}
     >
       {children}

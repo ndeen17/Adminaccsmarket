@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Bell, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,8 +26,9 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
   // Listen for custom toggle sidebar event from sidebar close button
   useEffect(() => {
     const handleToggleSidebar = () => toggleSidebar();
-    window.addEventListener('toggle-sidebar', handleToggleSidebar);
-    return () => window.removeEventListener('toggle-sidebar', handleToggleSidebar);
+    window.addEventListener("toggle-sidebar", handleToggleSidebar);
+    return () =>
+      window.removeEventListener("toggle-sidebar", handleToggleSidebar);
   }, [toggleSidebar]);
 
   useEffect(() => {
@@ -45,7 +45,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
         size="icon"
         onClick={toggleSidebar}
         aria-label="Toggle sidebar"
-        className="focus:outline-none focus:ring-1 focus:ring-primary"
+        className="focus:outline-none focus:ring-1 focus:ring-primary lg:hidden"
       >
         {isMobile && isSidebarOpen ? (
           <X className="h-5 w-5" />
@@ -53,6 +53,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
           <Menu className="h-5 w-5" />
         )}
       </Button>
+
       <div className="flex flex-1 items-center justify-between">
         <div className="truncate">
           <h1 className="text-base font-semibold sm:text-lg md:text-xl truncate">
@@ -78,21 +79,31 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
               <DropdownMenuSeparator />
               <DropdownMenuItem className="flex flex-col items-start py-2">
                 <span className="font-medium">New order received</span>
-                <span className="text-xs text-muted-foreground">2 minutes ago</span>
+                <span className="text-xs text-muted-foreground">
+                  2 minutes ago
+                </span>
               </DropdownMenuItem>
               <DropdownMenuItem className="flex flex-col items-start py-2">
                 <span className="font-medium">User John Doe registered</span>
-                <span className="text-xs text-muted-foreground">1 hour ago</span>
+                <span className="text-xs text-muted-foreground">
+                  1 hour ago
+                </span>
               </DropdownMenuItem>
               <DropdownMenuItem className="flex flex-col items-start py-2">
                 <span className="font-medium">Product update needed</span>
-                <span className="text-xs text-muted-foreground">3 hours ago</span>
+                <span className="text-xs text-muted-foreground">
+                  3 hours ago
+                </span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="relative h-8 w-8 rounded-full"
+              >
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>
                     {admin?.username?.charAt(0) || "A"}
